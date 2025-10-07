@@ -1,0 +1,34 @@
+@startuml ECU
+title ECU 
+
+[*] -> 初期化Init 
+初期化Init -> WaitingForStart
+
+WaitingForStart --> Running : start()
+
+
+Running --> Stopped : stop() 
+
+state Running {
+    [*] --> 待機
+
+    待機 --> HandlingRequest : RequestMessage
+    HandlingRequest --> 待機 
+
+    state HandlingRequest {
+        [*] --> 処理
+        処理 --> 状態更新 
+        状態更新 --> [*] 
+    }
+
+    ' 你也可以保留一个定时更新的状态
+    待機 --> 自動アップデート : ECU cycle
+    自動アップデート --> 待機 
+
+    待機 --> 状態更新 : timeout
+    状態更新 --> 待機 
+}
+
+Stopped --> [*]
+
+@enduml

@@ -1,0 +1,92 @@
+@startuml ECU_Activity
+title ECU Activity
+
+start
+:初期化Init; 
+->start();
+:Running;
+fork  
+    ->stop();
+fork again
+    partition ECU_Loop #LightBlue{
+    repeat
+    if (RequestMessage?) then (yes)
+
+      partition 処理実行 #WhiteSmoke{
+
+        if (RequestMessage長の検査) then (yes) 
+            if (subfunctionの検査) then (yes)
+                switch (SID?)
+                    case(0x10)
+                        partition SID$10 #LightGray{
+                            switch(subfunction?)
+                                case($01)
+                                    if(ECU Session legal) then (no)
+                                        :NRC=$7Eを返送;
+                                    else(yes)
+                                        :ECU Session = $01;
+                                        :$01を組み込んだポジレスを返送;
+                                    endif 
+                                case($02)
+                                    :...;
+                                case($03)
+                                    if(ECU Session legal) then (no)
+                                        :NRC=$7Eを返送;
+                                    else(yes)
+                                        :ECU Session = $03;
+                                        :$03を組み込んだポジレスを返送;
+                                    endif 
+                                case($4C)
+                                    :...;
+                                case($4D)
+                                    :...;
+                                case($4E)
+                                    :...;
+                                case($4F)
+                                    if(ECU Session legal?) then (no)
+                                        :NRC=$7Eを返送;
+                                    elseif(Security解除?) then (no)
+                                        :NRC=$33を返送;
+                                    else(yes)
+                                        :ECU Session = $4F;
+                                        :$4Fを組み込んだポジレスを返送;
+                                    endif 
+                            endswitch
+                            :時間リセット;
+                        }
+                    case(...)
+                        :...;
+                    case(...)
+                        :...;
+                endswitch
+            else(no)
+                :NRC = $12のネガレスを返送;
+            endif
+        else (no)
+            :NRC = $13のネガレスを返送;
+        endif
+      }
+
+    elseif (ECU cycle?) then (yes)
+
+      :自動アップデート実行;
+
+      :時間記録;
+
+    elseif (timeout?) then (yes)
+
+      partition 状態更新実行{
+
+        :時間リセット;
+
+      }
+
+    else (no)
+
+    endif
+    repeat while(TRUE)
+    }
+    kill
+end fork
+stop
+@enduml

@@ -1,0 +1,9 @@
+@startuml test
+start
+
+while (true)
+  :処理を繰り返す;
+endwhile
+
+stop
+@enduml

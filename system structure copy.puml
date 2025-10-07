@@ -1,0 +1,73 @@
+@startuml ECU Simulator
+title ECU Simulator
+
+class Tester {
+    +SID: int
+    +subFunction: int
+    +dataID: int
+    +data: int
+}
+
+class ECU {
+    +DiagnosticSession: int
+    +Security: security
+    +Timer: double
+    +processRequest(request: RequestMessage): ResponseMessage
+    +...
+}
+
+class security{
+    + Type4: boolean
+    + Type5: boolean
+    + Type10: boolean
+}
+
+abstract class Energy{
+    +Voltage: double
+    +status: string
+}
+abstract class RequestMessage {
+    +SID: int
+    +subFunction: int
+    +dataID: int
+    +data: int
+}
+abstract class ResponseMessage {
+}
+' 正向响应消息
+class PositiveResponseMessage extends ResponseMessage {
+    +SID: int
+    +subFunction: int
+    +dataID: int
+    +data: int
+}
+
+' 负向响应消息
+class NegativeResponseMessage extends ResponseMessage {
+    +SID: int
+    +SIDRQ: int
+    +NRC: int
+}
+
+class PowerInput {
+    +Voltage: double
+    +status: string
+}
+
+class UnknowInput {
+    +...
+    +...
+}
+
+class UnknownOutput {
+    +...
+    +...
+}
+
+UnknowInput --> ECU : unknown
+PowerInput --> ECU : energy
+Tester --> ECU : RequestMessage
+ECU --> UnknownOutput : unknown
+ECU --> Tester : ResponseMessage
+
+@enduml
