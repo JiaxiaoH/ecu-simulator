@@ -1,6 +1,6 @@
 import os, sys, time
 import tkinter as tk
-
+from tkinter import ttk
 def pushed(btn_name):
  print(f"{btn_name}clicked")
 
@@ -34,35 +34,39 @@ send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send
 #battery_button.config(command=lambda: pushed(battery_button["text"]))
 send_button.place(relx=0.9, rely=0.1, anchor='e')          # 右侧，垂直居中
 
-# 表格区域
-table_frame = tk.Frame(root)
-table_frame.place(relx=0.1, rely=0.3, relwidth= 0.8, anchor='n')  # 放在下方
+tframe = tk.Frame(root)
+# place the table frame under the top controls and align left/right with the two buttons
+# buttons are at relx=0.1 (left) and relx=0.9 (right), so start at relx=0.1 and width 0.8
+# use anchor='nw' so the left edge aligns with the left button position
+tframe.place(relx=0.1, rely=0.18, relwidth=0.8, relheight=0.7, anchor='nw')
 
-canvas = tk.Canvas(table_frame, width=400, height=150)
-canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+# --- 6x6 tableview with scrollbars ---
+cols = [f"C{i+1}" for i in range(6)]
+tree = ttk.Treeview(tframe, columns=cols, show='headings', height=6)
+for i, c in enumerate(cols):
+    tree.heading(c, text=f"Col {i+1}")
+    tree.column(c, width=90, anchor='center')
 
-v_scroll = tk.Scrollbar(table_frame, orient=tk.VERTICAL, command=canvas.yview)
-v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-h_scroll = tk.Scrollbar(root, orient=tk.HORIZONTAL, command=canvas.xview)
-h_scroll.place(relx=0.1, rely=0.65, relwidth=1, anchor='n')
+# vertical and horizontal scrollbars
+v_scroll = ttk.Scrollbar(tframe, orient=tk.VERTICAL, command=tree.yview)
+h_scroll = ttk.Scrollbar(tframe, orient=tk.HORIZONTAL, command=tree.xview)
+tree.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
 
-canvas.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
+# layout - tree in grid so scrollbars can align
+tree.grid(row=0, column=0, sticky='nsew')
+v_scroll.grid(row=0, column=1, sticky='ns')
+h_scroll.grid(row=1, column=0, columnspan=2, sticky='ew')
 
-table_inner = tk.Frame(canvas)
-canvas.create_window((0, 0), window=table_inner, anchor='nw')
+# allow expansion
+tframe.grid_rowconfigure(0, weight=1)
+tframe.grid_columnconfigure(0, weight=1)
 
-# 填充表格内容
-for i in range(6):
-    for j in range(6):
-        lbl = tk.Label(table_inner, width=9, height=2, text=f"R{i+1}C{j+1}", borderwidth=0, highlightthickness=0)
-        lbl.grid(row=i, column=j, sticky='nsew')
+# populate 6x6 sample data
+for r in range(6):
+    values = [f"R{r+1}C{c+1}" for c in range(6)]
+    tree.insert('', 'end', values=values)
 
-def on_configure(event):
-    canvas.configure(scrollregion=canvas.bbox('all'))
-
-table_inner.bind('<Configure>', on_configure)
-canvas.configure(xscrollcommand=h_scroll.set)
-h_scroll.config(command=canvas.xview)
+# end table
 
 # rootを表示し無限ループ
 root.mainloop()
