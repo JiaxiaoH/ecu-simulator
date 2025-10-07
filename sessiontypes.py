@@ -1,0 +1,11 @@
+class SESSIONS:
+    DEFAULT_SESSION = 0x01
+    PROGRAMMING_SESSION = 0x02
+    EXTENDED_SESSION = 0x03
+    FOTAINSTALL_SESSION = 0x4C
+    FOTAACTIVE_SESSION = 0x4D
+    FOTAINSTALLACTIVE_SESSION = 0x4E
+    ENGINEERING_SESSION = 0x4F 
+    #def __setattr__(self, key, value):
+    #    raise AttributeError("DO NOT CHANGE the VALUES of SESSIONS !")
+

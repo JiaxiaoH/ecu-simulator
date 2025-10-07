@@ -1,0 +1,19 @@
+@startuml Timing Diagram
+title Timing Diagram
+
+actor Tester
+participant ECU
+
+Tester -> ECU: send RequestMessage(SID, subFunction, dataID, data)
+activate ECU
+
+alt Positive Response
+    ECU -> ECU: process RequestMessage
+    ECU --> Tester: PositiveResponseMessage(SID=request.SID, subFunction, dataID, data)
+else Negative Response
+    ECU -> ECU: process RequestMessage
+    ECU --> Tester: NegativeResponseMessage(SID, SIDRQ, NRC)
+end
+deactivate ECU
+
+@enduml
