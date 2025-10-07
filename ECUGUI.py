@@ -33,7 +33,6 @@ entry.place(relx=0.5, rely=0.1, anchor='center')     # 中间，垂直居中
 send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send"))
 #battery_button.config(command=lambda: pushed(battery_button["text"]))
 send_button.place(relx=0.9, rely=0.1, anchor='e')          # 右侧，垂直居中
-
 tframe = tk.Frame(root)
 # place the table frame under the top controls and align left/right with the two buttons
 # buttons are at relx=0.1 (left) and relx=0.9 (right), so start at relx=0.1 and width 0.8
