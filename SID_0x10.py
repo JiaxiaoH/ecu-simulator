@@ -54,7 +54,7 @@ class SID_0x10:
                 #
                 #
                 ecu.DiagnosticSession=request.subfunction
-                return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=request.dataID, data=0x32)
+                return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
             case SESSIONS.PROGRAMMING_SESSION:
                 #...
                 #
@@ -62,13 +62,13 @@ class SID_0x10:
                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x00)
             case SESSIONS.EXTENDED_SESSION:
                 ecu.DiagnosticSession=request.subfunction
-                return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=request.dataID, data=0x32)
+                return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
             case SESSIONS.ENGINEERING_SESSION:
                 #if not ecu.security:
                 #    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
                 #else:
                     ecu.DiagnosticSession=request.subfunction
-                    return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=request.dataID, data=0x32)
+                    return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
             case SESSIONS.FOTAINSTALL_SESSION:
                 #...
                 #
@@ -90,7 +90,7 @@ class SID_0x10:
         supported_subfuncs = SID_0x10.SESSION_SUPPORTED_SUBFUNCS.get(session, set())
         return subfunction in supported_subfuncs
     
-    #查找request message是否为2byte，从Python-CAN抄的
+    #查找request message是否为2byte
     def is_request_message_2_byte(request):
         length=len(request.to_bytearray())
         if len2dlc(length)==2:
