@@ -85,10 +85,10 @@ class NegativeResponseMessage(ResponseMessage):
     def is_positive(self) -> bool:
         return False
     def __str__(self) -> str:
-        SID_str = f"0x{self.SID:02X}" if self.SID is not None else "None"
-        SIDRQ_str = f"0x{self.SIDRQ:02X}" if self.SIDRQ is not None else "None"
-        NRC_str = f"0x{self.NRC:02X}" if self.NRC is not None else "None"
-        return (f"{SID_str} {SIDRQ_str} {NRC_str})")
+        SID_str = f"{self.SID:02X}" if self.SID is not None else "None"
+        SIDRQ_str = f"{self.SIDRQ:02X}" if self.SIDRQ is not None else "None"
+        NRC_str = f"{self.NRC:02X}" if self.NRC is not None else "None"
+        return (f"{SID_str} {SIDRQ_str} {NRC_str}")
     
 
 # class MessageListener:

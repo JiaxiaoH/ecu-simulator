@@ -62,7 +62,7 @@ def main():
     response_queue = Queue()
     ecu = ECU(energy=energy, request_queue=request_queue, response_queue=response_queue, tree=tree)
     
-    battery_button = tk.Button(root, text="ON/OFF", command=lambda: ButtonPush.battery("ON/OFF", ecu, energy, battery_button))
+    battery_button = tk.Button(root, text="ON/OFF", command=lambda: ButtonPush.battery("POWER", ecu, energy, battery_button))
     battery_button.place(relx=0.1, rely=0.1, anchor='w')  
 
     entry = tk.Entry(root, width=50)
