@@ -9,11 +9,13 @@ import sessiontypes
 from CANmessage import RequestMessage, ResponseMessage
 class ButtonPush:
     @classmethod
-    def battery(cls, name, ecu, energy):
+    def battery(cls, name, ecu, energy, button):
         if energy.status == 'POWER_ON':
             energy.status='POWER_OFF'
+            button.config(text='POWER_OFF')
         else:
             energy.status='POWER_ON'
+            button.config(text='POWER_ON')
         ecu.on_power_status_changed(energy.status)
     @classmethod 
     def send(cls, name, request_queue, entry=None, tree=None):
@@ -60,7 +62,7 @@ def main():
     response_queue = Queue()
     ecu = ECU(energy=energy, request_queue=request_queue, response_queue=response_queue, tree=tree)
     
-    battery_button = tk.Button(root, text="ON/OFF", command=lambda: ButtonPush.battery("ON/OFF", ecu, energy))
+    battery_button = tk.Button(root, text="ON/OFF", command=lambda: ButtonPush.battery("ON/OFF", ecu, energy, battery_button))
     battery_button.place(relx=0.1, rely=0.1, anchor='w')  
 
     entry = tk.Entry(root, width=50)
