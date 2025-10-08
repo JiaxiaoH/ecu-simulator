@@ -34,26 +34,40 @@ class CanMessage(ABC):
         tree.insert('', 'end', values=[now_str, direction, msg_str, '', '', ''])
         tree.see(tree.get_children()[-1])
 
+    def to_bytearray(self):
+        byte_data = bytearray()
+        byte_data.append(self.SID)
+        byte_data.append(self.subfunction)
+        # dataID 拆成高低字节
+        if self.dataID is not None:
+            byte_data.append((self.dataID >> 8) & 0xFF)
+            byte_data.append(self.dataID & 0xFF)
+        # data 拆成高低字节
+        if self.data is not None:
+            byte_data.append((self.data >> 8) & 0xFF)
+            byte_data.append(self.data & 0xFF)
+        return byte_data
+
 class RequestMessage(CanMessage):
     def __init__(self, SID=0x00, subfunction=0x00, dataID=None, data=None):
         self.SID = SID
         self.subfunction = subfunction
         self.dataID = dataID
         self.data = data
-    def to_bytearray(self):
-        byte_data = bytearray()
-        byte_data.append(self.SID)
-        if(self.subfunction): byte_data.append(self.subfunction)
-        if(self.dataID): byte_data.append(self.dataID)  
-        if(self.data): byte_data.append(self.data)
-        return byte_data
+    # def to_bytearray(self):
+    #     byte_data = bytearray()
+    #     byte_data.append(self.SID)
+    #     if(self.subfunction is not None): byte_data.append(self.subfunction)
+    #     if(self.dataID is not None): byte_data.append(self.dataID)  
+    #     if(self.data is not None): byte_data.append(self.data)
+    #     return byte_data
     def __str__(self) -> str:
-        SID_str = f"{self.SID:02X}" if self.SID is not None else "None"
-        subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "None"
-        dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "None"
-        data_str = f"{self.data:02X}" if self.data is not None else "None"
+        SID_str = f"{self.SID:02X}" if self.SID is not None else "  "
+        subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "  "
+        dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "  "
+        data_str = f"{self.data:02X}" if self.data is not None else "  "
         return (f"{SID_str} {subfunction_str} {dataID_str} {data_str}")
-    
+        
 class ResponseMessage(CanMessage):
     @abstractmethod
     def is_positive(self) -> bool:
@@ -71,11 +85,27 @@ class PositiveResponseMessage(ResponseMessage):
     def is_positive(self) -> bool:
         return True
     def __str__(self) -> str:
-        SID_str = f"{self.SID:02X}" if self.SID is not None else "None"
-        subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "None"
-        dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "None"
-        data_str = f"{self.data:02X}" if self.data is not None else "None"
-        return (f"{SID_str} {subfunction_str} {dataID_str} {data_str}")
+        SID_str = f"{self.SID:02X}" if self.SID is not None else "  "
+        subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "  "
+        if self.dataID is None:
+            dataID_high_str = "  "
+            dataID_low_str = "  "
+        else:
+            dataID_high = (self.dataID >> 8) & 0xFF
+            dataID_low = self.dataID & 0xFF
+            dataID_high_str = f"{dataID_high:02X}"
+            dataID_low_str = f"{dataID_low:02X}"
+        if self.data is None:
+            data_high_str = "  "
+            data_low_str = "  "
+        else:
+            data_high = (self.data >> 8) & 0xFF
+            data_low = self.data & 0xFF
+            data_high_str = f"{data_high:02X}"
+            data_low_str = f"{data_low:02X}"
+        return (f"{SID_str} {subfunction_str} "
+                f"{dataID_high_str} {dataID_low_str} "
+                f"{data_high_str} {data_low_str}")
 
 class NegativeResponseMessage(ResponseMessage):
     def __init__(self, SID=0x7F, SIDRQ=0x00, NRC=0x00):
@@ -85,9 +115,9 @@ class NegativeResponseMessage(ResponseMessage):
     def is_positive(self) -> bool:
         return False
     def __str__(self) -> str:
-        SID_str = f"{self.SID:02X}" if self.SID is not None else "None"
-        SIDRQ_str = f"{self.SIDRQ:02X}" if self.SIDRQ is not None else "None"
-        NRC_str = f"{self.NRC:02X}" if self.NRC is not None else "None"
+        SID_str = f"{self.SID:02X}" if self.SID is not None else "  "
+        SIDRQ_str = f"{self.SIDRQ:02X}" if self.SIDRQ is not None else "  "
+        NRC_str = f"{self.NRC:02X}" if self.NRC is not None else "  "
         return (f"{SID_str} {SIDRQ_str} {NRC_str}")
     
 
