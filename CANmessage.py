@@ -3,11 +3,38 @@ from queue import Queue
 import threading
 import time
 from queue import Empty
-
+import datetime
 request_queue=Queue()
 response_queue=Queue()
 
-class RequestMessage:
+class CanMessage(ABC):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+    def is_request(self) -> bool:
+        return isinstance(self, RequestMessage)
+
+    def is_response(self) -> bool:
+        return isinstance(self, ResponseMessage)
+    
+    def log_to_treeview(self, tree):
+        #Time
+        now_str = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]  # ms
+        msg_str = str(self)
+        if self.is_request():
+            direction = "Rx"
+        elif self.is_response():
+            direction = "Tx"
+        else:
+            direction = "Unknown"
+        tree.insert('', 'end', values=[now_str, direction, msg_str, '', '', ''])
+        tree.see(tree.get_children()[-1])
+
+class RequestMessage(CanMessage):
     def __init__(self, SID=0x00, subfunction=0x00, dataID=None, data=None):
         self.SID = SID
         self.subfunction = subfunction
@@ -21,13 +48,13 @@ class RequestMessage:
         if(self.data): byte_data.append(self.data)
         return byte_data
     def __str__(self) -> str:
-        SID_str = f"0x{self.SID:02X}" if self.SID is not None else "None"
-        subfunction_str = f"0x{self.subfunction:02X}" if self.subfunction is not None else "None"
-        dataID_str = f"0x{self.dataID:02X}" if self.dataID is not None else "None"
-        data_str = f"0x{self.data:02X}" if self.data is not None else "None"
-        return (f"PositiveResponseMessage(SID={SID_str}, subfunction={subfunction_str}, dataID={dataID_str}, data={data_str})")
+        SID_str = f"{self.SID:02X}" if self.SID is not None else "None"
+        subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "None"
+        dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "None"
+        data_str = f"{self.data:02X}" if self.data is not None else "None"
+        return (f"{SID_str} {subfunction_str} {dataID_str} {data_str}")
     
-class ResponseMessage(ABC):
+class ResponseMessage(CanMessage):
     @abstractmethod
     def is_positive(self) -> bool:
         pass
@@ -44,11 +71,11 @@ class PositiveResponseMessage(ResponseMessage):
     def is_positive(self) -> bool:
         return True
     def __str__(self) -> str:
-        SID_str = f"0x{self.SID:02X}" if self.SID is not None else "None"
-        subfunction_str = f"0x{self.subfunction:02X}" if self.subfunction is not None else "None"
-        dataID_str = f"0x{self.dataID:02X}" if self.dataID is not None else "None"
-        data_str = f"0x{self.data:02X}" if self.data is not None else "None"
-        return (f"PositiveResponseMessage(SID={SID_str}, subfunction={subfunction_str}, dataID={dataID_str}, data={data_str})")
+        SID_str = f"{self.SID:02X}" if self.SID is not None else "None"
+        subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "None"
+        dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "None"
+        data_str = f"{self.data:02X}" if self.data is not None else "None"
+        return (f"{SID_str} {subfunction_str} {dataID_str} {data_str}")
 
 class NegativeResponseMessage(ResponseMessage):
     def __init__(self, SID=0x7F, SIDRQ=0x00, NRC=0x00):
@@ -61,7 +88,7 @@ class NegativeResponseMessage(ResponseMessage):
         SID_str = f"0x{self.SID:02X}" if self.SID is not None else "None"
         SIDRQ_str = f"0x{self.SIDRQ:02X}" if self.SIDRQ is not None else "None"
         NRC_str = f"0x{self.NRC:02X}" if self.NRC is not None else "None"
-        return (f"NegativeResponseMessage(SID={SID_str}, SIDRQ={SIDRQ_str}, NRC={NRC_str})")
+        return (f"{SID_str} {SIDRQ_str} {NRC_str})")
     
 
 # class MessageListener:
