@@ -5,7 +5,8 @@ from CANmessage import Queue
 import threading
 import tkinter as tk
 from tkinter import ttk
-
+import sessiontypes
+from CANmessage import RequestMessage, ResponseMessage
 class ButtonPush:
     @classmethod
     def battery(cls, name, ecu, energy):
@@ -15,17 +16,15 @@ class ButtonPush:
             energy.status='POWER_ON'
         ecu.on_power_status_changed(energy.status)
     @classmethod 
-    def send(cls, name, entry=None):
-       # If an Entry widget is provided, print its current text; otherwise print the name
-       try:
-           if entry is not None:
-               print(entry.get())
-           else:
-               print(f"{name}send")
-       except Exception as e:
-           print("Error reading entry:", e)
-
-
+    def send(cls, name, request_queue, entry=None):
+        if entry is not None and entry.get().strip() != "":
+            can_entry= [int(x, 16) for x in entry.get().split()]
+            while len(can_entry) < 4:
+                can_entry.append(0)
+            req = RequestMessage(SID=can_entry[0], subfunction = can_entry[1], dataID=can_entry[2], data=can_entry[3])  # 诊断会话请求
+            print(f"[Tester] Sending request to ECU, SID=0x{req.SID:02X}, subfunction=0x{req.subfunction:02X}, subfunction=0x{req.dataID:02X}, data=0x{req.data:02X}")
+            request_queue.put(req)
+            entry.delete(0, 'end')
 def main():
     energy = Energy()
     request_queue = Queue()
@@ -42,7 +41,7 @@ def main():
     battery_button.place(relx=0.1, rely=0.1, anchor='w') 
     entry = tk.Entry(root, width=50)
     entry.place(relx=0.5, rely=0.1, anchor='center') 
-    send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send", entry))
+    send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send",  request_queue, entry))
     send_button.place(relx=0.9, rely=0.1, anchor='e')          
     tframe = tk.Frame(root)
     tframe.place(relx=0.1, rely=0.18, relwidth=0.8, relheight=0.7, anchor='nw')
