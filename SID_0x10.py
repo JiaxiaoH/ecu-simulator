@@ -36,6 +36,8 @@ class SID_0x10:
                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x7E)
             if not SID_0x10.is_request_message_2_byte(request):
                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x13)
+            if (not ecu.security) and request.subfunction==0x4F:
+                return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
         except Exception as e:
                     print(f"[ERROR] SID_0X10 error: {e}")
                     import traceback
@@ -62,9 +64,9 @@ class SID_0x10:
                 ecu.DiagnosticSession=request.subfunction
                 return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=request.dataID, data=0x32)
             case SESSIONS.ENGINEERING_SESSION:
-                if not ecu.security:
-                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
-                else:
+                #if not ecu.security:
+                #    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
+                #else:
                     ecu.DiagnosticSession=request.subfunction
                     return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=request.dataID, data=0x32)
             case SESSIONS.FOTAINSTALL_SESSION:
