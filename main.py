@@ -80,7 +80,7 @@ def main():
 
     send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send",  request_queue, entry, tree))
     send_button.place(relx=0.9, rely=0.1, anchor='e')
-
+    entry.bind("<Return>", lambda event: ButtonPush.send("Send", request_queue, entry, tree))
     ecu_thread = threading.Thread(target=ecu.run)
     ecu_thread.start()
 
