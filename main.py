@@ -48,9 +48,10 @@ def main():
     # --- 6x6 tableview with scrollbars ---
     cols = [f"C{i+1}" for i in range(6)]
     tree = ttk.Treeview(tframe, columns=cols, show='headings', height=6)
+    tree_head=['Time', 'Dir', 'Msg', '...', '...', '...' ]
     for i, c in enumerate(cols):
-        tree.heading(c, text=f"Col {i+1}")
-        tree.column(c, width=90, anchor='center')
+        tree.heading(c, text=tree_head[i])
+        tree.column(c, width=80, anchor='center')
     # vertical and horizontal scrollbars
     v_scroll = ttk.Scrollbar(tframe, orient=tk.VERTICAL, command=tree.yview)
     h_scroll = ttk.Scrollbar(tframe, orient=tk.HORIZONTAL, command=tree.xview)
