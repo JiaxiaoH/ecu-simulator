@@ -4,7 +4,7 @@ from CANmessage import request_queue, response_queue, RequestMessage, PositiveRe
 from SID_0x10 import SID_0x10
 from sessiontypes import SESSIONS
 class ECU:
-    def __init__(self, energy, request_queue, response_queue, frequency_hz=60):
+    def __init__(self, energy, request_queue, response_queue, tree, frequency_hz=60):
         self.energy = energy
         self.DiagnosticSession = SESSIONS.DEFAULT_SESSION
         self.request_queue = request_queue
@@ -19,7 +19,7 @@ class ECU:
         self.clear_timer_event = threading.Event()
         self.lock = threading.Lock()
         self.security=False
-
+        self.tree = tree
     def on_power_status_changed(self, status):
         if status == "POWER_ON":
             print("[ECU] Received POWER_ON signal, starting ECU...")
@@ -35,17 +35,6 @@ class ECU:
         print("ECU is ready, waiting for power signal...")
         #last_status = None
         while not self.stop_event.is_set():
-            # current_status = self.energy.status
-            # if current_status != last_status:
-            #     if current_status == "POWER_ON":
-            #         print("[ECU] POWER_ON, ECU Start")
-            #         self.start_event.set()
-            #         self.running = True
-            #     elif current_status == "POWER_OFF":
-            #         print("[ECU] POWER_OFF, ECU Stop")
-            #         self.start_event.clear()
-            #         self.running = False
-            #     last_status = current_status
             if self.running:
                 preSession=self.DiagnosticSession
                 start_time = time.time()
@@ -68,6 +57,7 @@ class ECU:
                             case 16: #16=0x10
                                 resp=SID_0x10.handle(req, self); 
                                 self.response_queue.put(resp)
+                                resp.log_to_treeview(self.tree)
                                 print(f"[ECU] Sended {resp}")                     
                         if preSession != self.DiagnosticSession:
                             print(f"[ECU] Session changed from {preSession} to {self.DiagnosticSession}")
@@ -79,6 +69,7 @@ class ECU:
                         print("[ECU][SID$10] P2 timeout!")
                         resp=NegativeResponseMessage(SIDRQ=req.SID, NRC=0x78)
                         self.response_queue.put(resp)  
+                        req.log_to_treeview(self.tree)
                     else :
                         processing_request=False
                 except:
