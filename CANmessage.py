@@ -20,8 +20,8 @@ class CanMessage(ABC):
 
     def is_response(self) -> bool:
         return isinstance(self, ResponseMessage)
-    
-    def log_to_treeview(self, tree):
+    #about tree: something about tree or ecu maybe deleted after report...
+    def log_to_treeview(self, tree, ecu):
         #Time
         now_str = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]  # ms
         msg_str = str(self)
@@ -31,7 +31,7 @@ class CanMessage(ABC):
             direction = "Tx"
         else:
             direction = "Unknown"
-        tree.insert('', 'end', values=[now_str, direction, msg_str, '', '', ''])
+        tree.insert('', 'end', values=[now_str, direction, msg_str, ecu.DiagnosticSession, ecu.security, ''])
         tree.see(tree.get_children()[-1])
 
     def to_bytearray(self):
