@@ -55,13 +55,7 @@ class RequestMessage(CanMessage):
         self.subfunction = subfunction
         self.dataID = dataID
         self.data = data
-    # def to_bytearray(self):
-    #     byte_data = bytearray()
-    #     byte_data.append(self.SID)
-    #     if(self.subfunction is not None): byte_data.append(self.subfunction)
-    #     if(self.dataID is not None): byte_data.append(self.dataID)  
-    #     if(self.data is not None): byte_data.append(self.data)
-    #     return byte_data
+
     def __str__(self) -> str:
         SID_str = f"{self.SID:02X}" if self.SID is not None else "  "
         subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "  "

@@ -24,11 +24,6 @@ class SID_0x10:
         SESSIONS.FOTAACTIVE_SESSION: {SESSIONS.FOTAACTIVE_SESSION}
     }
 
-    #def __init__(self, ecu, request = request_queue):
-    #    self.ecu=ecu
-    #    current_session=self.ecu.DiagnosticSession
-    #    self.request = request
-    #    time = 0
     @classmethod    
     def handle(self, request, ecu):
         try:
