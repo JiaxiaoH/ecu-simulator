@@ -57,12 +57,56 @@ class RequestMessage(CanMessage):
         self.data = data
 
     def __str__(self) -> str:
+        # SID_str = f"{self.SID:02X}" if self.SID is not None else "  "
+        # subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "  "
+        # dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "  "
+        # data_str = f"{self.data:02X}" if self.data is not None else "  "
+        # return (f"{SID_str} {subfunction_str} {dataID_str} {data_str}")
         SID_str = f"{self.SID:02X}" if self.SID is not None else "  "
         subfunction_str = f"{self.subfunction:02X}" if self.subfunction is not None else "  "
-        dataID_str = f"{self.dataID:02X}" if self.dataID is not None else "  "
-        data_str = f"{self.data:02X}" if self.data is not None else "  "
-        return (f"{SID_str} {subfunction_str} {dataID_str} {data_str}")
+        if self.dataID is None:
+            dataID_str = "  "
+        elif isinstance(self.dataID, int):
+            if self.dataID > 0xFF:
+                dataID_str = f"{(self.dataID >> 8) & 0xFF:02X} {self.dataID & 0xFF:02X}"
+            else:
+                dataID_str = f"{self.dataID:02X}"
+        elif isinstance(self.dataID, list):
+            dataID_str = " ".join(f"{b:02X}" for b in self.dataID)
+        else:
+            dataID_str = str(self.dataID)
+        # data部分以空格分隔的两位十六进制数列展示
+        if self.data is not None:
+            if isinstance(self.data, int):
+                data_str = f"{self.data:02X}"
+            else:
+                data_str = " ".join(f"{b:02X}" for b in self.data)
+        else:
+            data_str = ""
+        return f"{SID_str} {subfunction_str} {dataID_str} {data_str}".strip()
+    def to_bytearray(self):
+        byte_data = bytearray()
+        byte_data.append(self.SID)
         
+        if self.subfunction is not None:
+            byte_data.append(self.subfunction)
+        
+        if self.dataID is not None:
+            if isinstance(self.dataID, int):
+                # 如果是整数（向后兼容）
+                if self.dataID > 0xFF:
+                    byte_data.append((self.dataID >> 8) & 0xFF)
+                    byte_data.append(self.dataID & 0xFF)
+                else:
+                    byte_data.append(self.dataID & 0xFF)
+            elif isinstance(self.dataID, list):
+                byte_data.extend(self.dataID)
+        
+        if self.data:
+            byte_data.extend(self.data)
+        
+        return byte_data
+
 class ResponseMessage(CanMessage):
     @abstractmethod
     def is_positive(self) -> bool:
