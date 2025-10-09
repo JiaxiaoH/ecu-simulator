@@ -20,7 +20,12 @@ class ButtonPush:
     @classmethod 
     def send(cls, name, request_queue, entry=None, tree=None):
         if entry is not None and entry.get().strip() != "":
-            can_entry= [int(x, 16) for x in entry.get().split()]
+            try:
+                can_entry= [int(x, 16) for x in entry.get().split()]
+            except ValueError:
+                entry.delete(0, 'end')
+                entry.insert(0, '[Error] please input hexadecimal numbers')
+                return
             SID=can_entry[0]
             subfunction=None
             dataID=None
@@ -29,10 +34,22 @@ class ButtonPush:
                 can_entry.append(None)
             if can_entry[1] is not None:
                 subfunction = can_entry[1]
-            if can_entry[2] is not None:
-                dataID = can_entry[2]
-            if can_entry[3] is not None:
-                data = can_entry[3]
+            # 从第2字节开始处理dataID和data
+            if len(can_entry) > 2 and can_entry[2] is not None:
+                # 先看剩余字节数（从index 2开始）
+                remaining = can_entry[2:]
+                if len(remaining) > 2:
+                # dataID用前两字节（高字节，低字节）
+                    #dataID = (remaining[0] << 8) | remaining[1]
+                    dataID = remaining[:2]
+                    # 剩余的字节放data
+                    data = remaining[2:] if len(remaining) > 2 else []
+                elif len(remaining)==2:
+                    dataID = remaining[0]
+                    data = remaining[1]
+                else:
+                    # 只有1字节，dataID就是这一字节
+                    dataID = remaining[0]
             req = RequestMessage(SID=SID, subfunction=subfunction, dataID=dataID, data=data)
             #print(f"[Tester] Sending request to ECU, SID=0x{req.SID:02X}, subfunction=0x{req.subfunction:02X}, subfunction=0x{req.dataID:02X}, data=0x{req.data:02X}")
             request_queue.put(req)
