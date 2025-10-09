@@ -57,7 +57,7 @@ class ECU:
                             case 16: #16=0x10
                                 resp=SID_0x10.handle(req, self); 
                                 self.response_queue.put(resp)
-                                resp.log_to_treeview(self.tree)
+                                resp.log_to_treeview(self.tree, self)
                                 print(f"[ECU] Sended {resp}")                     
                         if preSession != self.DiagnosticSession:
                             print(f"[ECU] Session changed from {preSession} to {self.DiagnosticSession}")
@@ -69,7 +69,7 @@ class ECU:
                         print("[ECU][SID$10] P2 timeout!")
                         resp=NegativeResponseMessage(SIDRQ=req.SID, NRC=0x78)
                         self.response_queue.put(resp)  
-                        req.log_to_treeview(self.tree)
+                        req.log_to_treeview(self.tree, self)
                     else :
                         processing_request=False
                 except:

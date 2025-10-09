@@ -8,6 +8,15 @@ from tkinter import ttk
 import sessiontypes
 from CANmessage import RequestMessage, ResponseMessage
 class ButtonPush:
+    #temp method for reporting. will be deleted when creating SID$27
+    @classmethod
+    def security(cls, name, ecu):
+        if ecu.security==False:
+            ecu.security=True
+        elif ecu.security==True:
+            ecu.security=False
+        else:
+            ecu.security=False
     @classmethod
     def battery(cls, name, ecu, energy, button):
         if energy.status == 'POWER_ON':
@@ -18,7 +27,7 @@ class ButtonPush:
             button.config(text='POWER_ON')
         ecu.on_power_status_changed(energy.status)
     @classmethod 
-    def send(cls, name, request_queue, entry=None, tree=None):
+    def send(cls, name, request_queue, ecu, entry=None, tree=None):
         if entry is not None and entry.get().strip() != "":
             try:
                 can_entry= [int(x, 16) for x in entry.get().split()]
@@ -54,7 +63,7 @@ class ButtonPush:
             #print(f"[Tester] Sending request to ECU, SID=0x{req.SID:02X}, subfunction=0x{req.subfunction:02X}, subfunction=0x{req.dataID:02X}, data=0x{req.data:02X}")
             request_queue.put(req)
             if tree is not None:
-                req.log_to_treeview(tree)
+                req.log_to_treeview(tree, ecu)
             entry.delete(0, 'end')
 def main():
     #准备GUI
@@ -67,7 +76,7 @@ def main():
     tframe.place(relx=0.1, rely=0.18, relwidth=0.8, relheight=0.7, anchor='nw')
     tree = ttk.Treeview(tframe, columns=cols, show='headings', height=6)       
     
-    tree_head=['Time', 'Dir', 'Msg', '...', '...', '...' ]
+    tree_head=['Time', 'Dir', 'Msg', 'Session', 'Security', '...' ]
     for i, c in enumerate(cols):
         tree.heading(c, text=tree_head[i])
         tree.column(c, width=80, anchor='center')
@@ -95,9 +104,13 @@ def main():
     entry = tk.Entry(root, width=50)
     entry.place(relx=0.5, rely=0.1, anchor='center')   
 
-    send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send",  request_queue, entry, tree))
+    send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send",  request_queue, ecu, entry, tree))
     send_button.place(relx=0.9, rely=0.1, anchor='e')
-    entry.bind("<Return>", lambda event: ButtonPush.send("Send", request_queue, entry, tree))
+    entry.bind("<Return>", lambda event: ButtonPush.send("Send", request_queue, ecu, entry, tree))
+    #template button for reporting. will be deleted when creating SID$27
+    security_button=tk.Button(root, text='Security', command=lambda: ButtonPush.security("Security", ecu))
+    security_button.place(relx=0.9, rely=0.9, anchor='e')
+
     ecu_thread = threading.Thread(target=ecu.run)
     ecu_thread.start()
 
