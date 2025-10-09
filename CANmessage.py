@@ -37,7 +37,8 @@ class CanMessage(ABC):
     def to_bytearray(self):
         byte_data = bytearray()
         byte_data.append(self.SID)
-        byte_data.append(self.subfunction)
+        if self.subfunction is not None:
+            byte_data.append(self.subfunction)
         # dataID 拆成高低字节
         if self.dataID is not None:
             byte_data.append((self.dataID >> 8) & 0xFF)

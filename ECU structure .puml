@@ -14,8 +14,8 @@ fork again
 
       partition 処理実行 #WhiteSmoke{
 
-        if (RequestMessage長の検査) then (yes) 
-            if (subfunctionの検査) then (yes)
+        if (RequestMessage長の検査(最小値未満の検査)) then (yes) 
+            if (diagnosticSessionType の検査) then (yes)
                 switch (SID?)
                     case(0x10)
                         partition SID$10 #LightGray{

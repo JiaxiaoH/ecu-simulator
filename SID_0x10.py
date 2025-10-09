@@ -32,27 +32,20 @@ class SID_0x10:
     @classmethod    
     def handle(self, request, ecu):
         try:
-            if not SID_0x10.is_subfunc_supported(ecu.DiagnosticSession, request.subfunction):
-                return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x7E)
-            if not SID_0x10.is_request_message_2_byte(request):
+            if SID_0x10.is_request_message_less_than_2_byte(request):
                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x13)
-            if (not ecu.security) and request.subfunction==0x4F:
-                return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
+            if not SID_0x10.is_subfuncs_supported(request.subfunction):
+                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x12)
         except Exception as e:
                     print(f"[ERROR] SID_0X10 error: {e}")
                     import traceback
                     traceback.print_exc()
-        # if not SID_0x10.is_subfunc_supported(subfn, request.subfunction):
-        #     print("hello1")
-        #     return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x7E)
-        # if not SID_0x10.is_request_message_2_byte(request):
-        #     print("hello2")
-        #     return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x13)
-        match ecu.DiagnosticSession:
+        match request.subfunction:
             case SESSIONS.DEFAULT_SESSION:
-                #P2CAN......
-                #
-                #
+                if not SID_0x10.is_session_supported(ecu.DiagnosticSession, request.subfunction):
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x7E)
+                if not SID_0x10.is_request_message_2_byte(request):
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x13)
                 ecu.DiagnosticSession=request.subfunction
                 return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
             case SESSIONS.PROGRAMMING_SESSION:
@@ -61,14 +54,21 @@ class SID_0x10:
                 #
                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x00)
             case SESSIONS.EXTENDED_SESSION:
+                if not SID_0x10.is_session_supported(ecu.DiagnosticSession, request.subfunction):
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x7E)
+                if not SID_0x10.is_request_message_2_byte(request):
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x13)
                 ecu.DiagnosticSession=request.subfunction
                 return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
             case SESSIONS.ENGINEERING_SESSION:
-                #if not ecu.security:
-                #    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
-                #else:
-                    ecu.DiagnosticSession=request.subfunction
-                    return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
+                if not SID_0x10.is_session_supported(ecu.DiagnosticSession, request.subfunction):
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x7E)
+                if not SID_0x10.is_request_message_2_byte(request):
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x13)
+                if (not ecu.security) and request.subfunction==0x4F:
+                    return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x33)
+                ecu.DiagnosticSession=request.subfunction
+                return PositiveResponseMessage(SID=request.SID+0x40, subfunction=request.subfunction, dataID=0x0032, data=0x01F4)
             case SESSIONS.FOTAINSTALL_SESSION:
                 #...
                 #
@@ -85,8 +85,20 @@ class SID_0x10:
                 #
                 return NegativeResponseMessage(SIDRQ=request.SID, NRC=0x00)
 
-    #查找subfunctino是否被支持
-    def is_subfunc_supported(session, subfunction):
+    #查找request message是否小于2byte
+    def is_request_message_less_than_2_byte(request):
+        length=len(request.to_bytearray())
+        if len2dlc(length)<2:
+            return True
+        else:
+            return False
+
+    #查找subfunction是否被支持
+    def is_subfuncs_supported(subfunction):
+        return subfunction in SID_0x10.AvailableSubFuncs
+    
+    #查找session是否被支持
+    def is_session_supported(session, subfunction):
         supported_subfuncs = SID_0x10.SESSION_SUPPORTED_SUBFUNCS.get(session, set())
         return subfunction in supported_subfuncs
     
