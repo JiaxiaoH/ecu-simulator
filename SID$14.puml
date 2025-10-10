@@ -1,0 +1,39 @@
+@startuml SID$14
+title SID$14
+start
+    partition SID$14 #LightBlue{
+    repeat
+    if (、Service $14 リクエスト・メッセージを受信) then (yes)
+
+      partition checkReq #WhiteSmoke{
+
+        if (DiagnosticSession != programmingSession) then (yes) 
+            if (len(RequestMessage) == 4byte) then (yes)
+                if(groupOfDtc == FFFFFF) then (yes)
+                    if(車両運転条件の検査) then (yes)
+                        if(メモリエラーが発生した) then (no)
+                            :SID = $54のポジレスを返送;
+                        else(yes)
+                            :NRC = $72のネガレスを返送;
+                        endif
+                    else(no)
+                        :NRC = $22のネガレスを返送;
+                    endif
+                else(no)
+                    :NRC = $31のネガレスを返送;
+                endif
+            else(no)
+                :NRC = $13のネガレスを返送;
+            endif
+        else (no)
+            :NRC = $7Fのネガレスを返送;
+        endif
+      }
+
+    else (no)
+
+    endif
+    repeat while(TRUE)
+    }
+stop
+@enduml
