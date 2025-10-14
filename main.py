@@ -1,131 +1,45 @@
-import os, sys, time
 from energy import Energy
 from ecu import ECU
-from CANmessage import Queue
 import threading
 import tkinter as tk
 from tkinter import ttk
-import sessiontypes
-from CANmessage import RequestMessage, ResponseMessage
-class ButtonPush:
-    #temp method for reporting. will be deleted when creating SID$27
-    @classmethod
-    def security(cls, name, ecu):
-        if ecu.security==False:
-            ecu.security=True
-        elif ecu.security==True:
-            ecu.security=False
-        else:
-            ecu.security=False
-    @classmethod
-    def battery(cls, name, ecu, energy, button):
-        if energy.status == 'POWER_ON':
-            energy.status='POWER_OFF'
-            button.config(text='POWER_OFF')
-        else:
-            energy.status='POWER_ON'
-            button.config(text='POWER_ON')
-        ecu.on_power_status_changed(energy.status)
-    @classmethod 
-    def send(cls, name, request_queue, ecu, entry=None, tree=None):
-        if entry is not None and entry.get().strip() != "":
-            try:
-                can_entry= [int(x, 16) for x in entry.get().split()]
-            except ValueError:
-                entry.delete(0, 'end')
-                entry.insert(0, '[Error] please input hexadecimal numbers')
-                return
-            SID=can_entry[0]
-            subfunction=None
-            dataID=None
-            data=None
-            while len(can_entry) < 4:
-                can_entry.append(None)
-            if can_entry[1] is not None:
-                subfunction = can_entry[1]
-            # 从第2字节开始处理dataID和data
-            if len(can_entry) > 2 and can_entry[2] is not None:
-                # 先看剩余字节数（从index 2开始）
-                remaining = can_entry[2:]
-                if len(remaining) > 2:
-                # dataID用前两字节（高字节，低字节）
-                    #dataID = (remaining[0] << 8) | remaining[1]
-                    dataID = remaining[:2]
-                    # 剩余的字节放data
-                    data = remaining[2:] if len(remaining) > 2 else []
-                elif len(remaining)==2:
-                    dataID = remaining[0]
-                    data = remaining[1]
-                else:
-                    # 只有1字节，dataID就是这一字节
-                    dataID = remaining[0]
-            req = RequestMessage(SID=SID, subfunction=subfunction, dataID=dataID, data=data)
-            #print(f"[Tester] Sending request to ECU, SID=0x{req.SID:02X}, subfunction=0x{req.subfunction:02X}, subfunction=0x{req.dataID:02X}, data=0x{req.data:02X}")
-            request_queue.put(req)
-            if tree is not None:
-                req.log_to_treeview(tree, ecu)
-            entry.delete(0, 'end')
+import can
+from gui import CanGuiApp
+# class BusBridge(can.Listener):
+#     def __init__(self, bus_to):
+#         self.bus_to = bus_to
+
+#     def on_message_received(self, msg):
+#         print(f"[Bridge] Received message on source bus: {msg}")
+#         try:
+#             self.bus_to.send(msg)
+#             print(f"[Bridge] Forwarded message to destination bus")
+#         except can.CanError as e:
+#             print(f"[Bridge] Failed to forward message: {e}")
 def main():
-    #准备GUI
-    root = tk.Tk()
-    root.title("CAN DIAG")
-    root.geometry("640x480")
-    # --- 6x6 tableview with scrollbars ---
-    cols = [f"C{i+1}" for i in range(6)]
-    tframe = tk.Frame(root)
-    tframe.place(relx=0.1, rely=0.18, relwidth=0.8, relheight=0.7, anchor='nw')
-    tree = ttk.Treeview(tframe, columns=cols, show='headings', height=6)       
-    
-    tree_head=['Time', 'Dir', 'Msg', 'Session', 'Security', '...' ]
-    for i, c in enumerate(cols):
-        tree.heading(c, text=tree_head[i])
-        tree.column(c, width=80, anchor='center')
-    # vertical and horizontal scrollbars
-    v_scroll = ttk.Scrollbar(tframe, orient=tk.VERTICAL, command=tree.yview)
-    h_scroll = ttk.Scrollbar(tframe, orient=tk.HORIZONTAL, command=tree.xview)
-    tree.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
-    # layout - tree in grid so scrollbars can align
-    tree.grid(row=0, column=0, sticky='nsew')
-    v_scroll.grid(row=0, column=1, sticky='ns')
-    h_scroll.grid(row=1, column=0, columnspan=2, sticky='ew')
-    # allow expansion
-    tframe.grid_rowconfigure(0, weight=1)
-    tframe.grid_columnconfigure(0, weight=1)
-    # end table
-
+    #stop_event = threading.Event()
+    bus = can.interface.Bus(bustype='virtual', channel='vcan0', bitrate=500000, receive_own_messages=True)
+    # GUI 使用的总线
+    #bus_gui = can.interface.Bus(channel='vcan0', interface='virtual', bitrate=500000)
+    # ECU 使用的总线
+    #bus_ecu = can.interface.Bus(channel='vcan1', interface='virtual', bitrate=500000)
     energy = Energy()
-    request_queue = Queue()
-    response_queue = Queue()
-    ecu = ECU(energy=energy, request_queue=request_queue, response_queue=response_queue, tree=tree)
-    
-    battery_button = tk.Button(root, text="POWER", command=lambda: ButtonPush.battery("POWER", ecu, energy, battery_button))
-    battery_button.place(relx=0.1, rely=0.1, anchor='w')  
-
-    entry = tk.Entry(root, width=50)
-    entry.place(relx=0.5, rely=0.1, anchor='center')   
-
-    send_button = tk.Button(root, text="Send", command=lambda: ButtonPush.send("Send",  request_queue, ecu, entry, tree))
-    send_button.place(relx=0.9, rely=0.1, anchor='e')
-    entry.bind("<Return>", lambda event: ButtonPush.send("Send", request_queue, ecu, entry, tree))
-    #template button for reporting. will be deleted when creating SID$27
-    security_button=tk.Button(root, text='Security', command=lambda: ButtonPush.security("Security", ecu))
-    security_button.place(relx=0.9, rely=0.9, anchor='e')
-
+    ecu = ECU(energy=energy, bus=bus)
+    #ecu = ECU(energy=energy, bus=bus_ecu)
+    app = CanGuiApp(bus=bus, ecu_interface=ecu, energy_interface=energy)
+    #app = CanGuiApp(bus=bus_gui, ecu_interface=ecu, energy_interface=energy)
+    notifier = can.Notifier(bus, [ecu, app])
+    # bridge_ecu = BusBridge(bus_to=bus_ecu)
+    # notifier_gui = can.Notifier(bus_gui, [bridge_ecu])  # 
+    # bridge_gui = BusBridge(bus_to=bus_gui)
+    # notifier_ecu = can.Notifier(bus_ecu, [bridge_gui])  # 
     ecu_thread = threading.Thread(target=ecu.run)
     ecu_thread.start()
+    app.run()
+    notifier.stop()
+    # stop_event.set()
+    # notifier_ecu.stop()
+    # notifier_gui.stop()
 
-    def on_close():
-        try:
-            ecu.stop()                # 通知 ECU 退出
-            ecu_thread.join(timeout=1)
-            print("ECU test finished.")
-        except Exception as e:
-            print("Error stopping ECU:", e)
-        root.destroy()
-
-    root.protocol("WM_DELETE_WINDOW", on_close)
-    # start the GUI event loop immediately so the window appears and is
-    # responsive while the simulation runs in the background
-    root.mainloop()
 if __name__ == "__main__":
     main()
