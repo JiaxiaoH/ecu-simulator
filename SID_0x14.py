@@ -16,9 +16,9 @@ class SID_0x14:
                  return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x7F, 0x10, 0x31], is_extended_id=False)          
             if cls.is_car_moving(ecu):
                  return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x7F, 0x10, 0x22], is_extended_id=False)          
+            ecu.dtc_clear()
             if cls.is_memory_error(ecu):
                  return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x7F, 0x10, 0x72], is_extended_id=False)          
-            ecu.dtc_clear()
             return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x54], is_extended_id=False)          
             
         except Exception as e:
