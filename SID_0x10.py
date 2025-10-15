@@ -1,6 +1,5 @@
 # sid_0x10.py
 import time
-#from ecu import ECU
 from sessiontypes import SESSIONS 
 import can
 import datetime

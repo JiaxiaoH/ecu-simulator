@@ -3,28 +3,44 @@ import threading
 import time
 import can
 from SID_0x10 import SID_0x10
+from SID_0x11 import SID_0x11
 from SID_0x14 import SID_0x14
 from sessiontypes import SESSIONS
 from uds_utils import handle_request_with_timeout
 import random
 class ECU(can.Listener):
+    SID_HANDLERS = {
+        0x10: SID_0x10,
+        0x11: SID_0x11,
+        0x14: SID_0x14
+    }
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
         self.energy = energy
-        self.DiagnosticSession = SESSIONS.DEFAULT_SESSION
         self.arbitration_id = 0x002
         self.bus = bus
         self.frequency = frequency_hz
         self.period = 1.0 / frequency_hz
-        self.P2_time = 5
-        self.running = False
         self.start_event = threading.Event()
         self.stop_event = threading.Event()
-        self.lock = threading.Lock()
-        self.security=False
-        self.received_request=False
-        self.moving=False
-        self.dtc=None
-        self.is_memory_error=False
+        self.reset_state()
+
+    def reset_state(self):
+        self.DiagnosticSession = SESSIONS.DEFAULT_SESSION
+        self.P2_time = 5
+        self.running = False
+        self.security = False
+        self.received_request = False
+        self.moving = False
+        self.dtc = None
+        self.is_memory_error = False
+
+    def hard_reset(self):
+        print("[ECU] Performing hard reset...")
+        self.on_power_status_changed("POWER_OFF")
+        time.sleep(1)#a simmulation for hard reset
+        self.reset_state()
+        self.on_power_status_changed("POWER_ON")
+        print("[ECU] Hard reboot complete.")
 
     def on_power_status_changed(self, status):
         if status == "POWER_ON":
@@ -35,13 +51,13 @@ class ECU(can.Listener):
             print("[ECU] Received POWER_OFF signal, stopping ECU...")
             self.running = False
             self.start_event.clear()
+            #self.reset_state()
 
     def on_message_received(self, msg):
         if not self.running:
             return
         try:
-            if not msg.arbitration_id == self.arbitration_id:
-                msg.is_rx=True
+            msg.is_rx = (msg.arbitration_id != self.arbitration_id)
             print(f"[ECU] Received {msg}")
             self.received_request=True
             response = handle_request_with_timeout(
@@ -77,6 +93,7 @@ class ECU(can.Listener):
 
     def stop(self):
         self.stop_event.set()
+
     def on_timeout(self, req):
         print("[ECU] P2 timeout!")
         try:
@@ -97,12 +114,12 @@ class ECU(can.Listener):
 
     def handle_request(self, req):
         try:
-            if req.data[0]==0x10:#SID
-                resp=SID_0x10.handle(req, self) 
-                return resp
-            if req.data[0]==0x14:
-                resp=SID_0x14.handle(req,self)
-                return resp
+            sid = req.data[0]
+            handler_cls = self.SID_HANDLERS.get(sid)
+            if handler_cls:
+                return handler_cls.handle(req, self)
+            else:
+                print(f"[ECU] Unsupported SID: {sid}")
         except Exception as e:
             print(f"[ECU] Error processing message: {e}")
     
