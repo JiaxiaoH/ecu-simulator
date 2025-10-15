@@ -26,6 +26,14 @@ class ButtonPush:
             energy.status='POWER_ON'
             button.config(text='POWER_ON')
         ecu.on_power_status_changed(energy.status)
+    @classmethod
+    def drive(cls, name, ecu, button):
+        if ecu.moving == False:
+            ecu.moving=True
+            button.config(text='Move')
+        else:
+            ecu.moving=False
+            button.config(text='Stop')
     @classmethod 
     def send(cls, name, bus, ecu, entry=None, send_callback=None):
         #print(f"ECU.session = {ecu.DiagnosticSession}")
@@ -36,7 +44,6 @@ class ButtonPush:
                 entry.delete(0, 'end')
                 entry.insert(0, '[Error] please input hexadecimal numbers')
                 return
-            
             if send_callback:
                 send_callback(data=can_entry)
             entry.delete(0, 'end')
@@ -90,6 +97,9 @@ class CanGuiApp(can.Listener):
         
         self.security_button = tk.Button(self.root, text="Security", command=lambda: ButtonPush.security("Security", self.ecu))
         self.security_button.place(relx=0.9, rely=0.9, anchor='e')
+
+        self.drive_button = tk.Button(self.root, text="DRIVE", command=lambda: ButtonPush.drive("DRIVE", self.ecu, self.drive_button))
+        self.drive_button.place(relx=0.1, rely=0.9, anchor='w')
 
     def run(self):
         self.root.mainloop()
