@@ -138,8 +138,6 @@ class CanGuiApp(can.Listener):
         except can.CanError:
             print("Message NOT sent")
 
-
-
     def stop(self):
         self.running = False
         #self.recv_thread.join(timeout=1)
@@ -154,19 +152,3 @@ class CanGuiApp(can.Listener):
             print("Error stopping ECU:", e)
         self.stop()
         self.root.destroy()
-
-# def trans_msg(msg):
-#     if msg is not None:
-#         dir = "Rx" if msg.is_rx else "Tx"
-#         timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-#         msg_id = f"{msg.arbitration_id:X}"
-#         data_str = " ".join(f"{b:02X}" for b in msg.data)
-#         combined_str = f"{msg_id} {data_str}"
-#         return(dir, timestamp, combined_str)
-#     return None
-
-# if __name__ == "__main__":
-#     bus = can.interface.Bus(bustype='virtual', channel='vcan0', bitrate=500000)
-#     energy = None
-#     ecu = None
-#     app = CanGuiApp(bus=bus, ecu_interface=ecu, energy_interface=energy)

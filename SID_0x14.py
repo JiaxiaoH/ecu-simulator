@@ -3,7 +3,17 @@ import time
 from sessiontypes import SESSIONS 
 import can
 import datetime
-class SID_0x14:
+from uds_sid import BaseSID
+class SID_0x14(BaseSID):
+    SUPPORTED_SESSIONS={
+        SESSIONS.DEFAULT_SESSION,
+        #SESSIONS.PROGRAMMING_SESSION,
+        SESSIONS.EXTENDED_SESSION,
+        SESSIONS.ENGINEERING_SESSION,
+        SESSIONS.FOTAACTIVE_SESSION,
+        SESSIONS.FOTAINSTALL_SESSION,
+        SESSIONS.FOTAINSTALLACTIVE_SESSION
+    }
     @classmethod    
     def handle(cls, request, ecu):
         try:
@@ -29,18 +39,3 @@ class SID_0x14:
     #查找groupOfDtc是否被支持
     def is_groupOfDtc_supported(request):
         return request.data == bytes([0x14, 0xff, 0xff, 0xff])
-    
-    #查找session是否被支持
-    def is_session_supported(session):
-        return session!=SESSIONS.PROGRAMMING_SESSION
-    
-    #查找request message是否为4byte
-    def is_request_message_4_byte(request):
-        return len(request.data) == 4
-
-    #检查车辆运行条件
-    def is_car_moving(ecu):
-         return ecu.moving
-    
-    def is_memory_error(ecu):
-         return ecu.is_memory_error
