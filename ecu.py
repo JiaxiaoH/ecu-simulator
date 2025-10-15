@@ -23,9 +23,39 @@ class ECU(can.Listener):
         self.start_event = threading.Event()
         self.stop_event = threading.Event()
         self.reset_state()
+    
+    @property
+    def session(self):
+        return self._session
+
+    @session.setter
+    def session(self, value):
+        if value!=self._session:
+            self._session=value
+            self._start_reset_timer(self._delay)
+
+    def _start_reset_timer(self, delay=3):
+        if self._reset_timer and self._reset_timer.is_alive():
+            self._reset_timer.cancel()
+        self._delay = delay
+        self._start_time = time.time()
+        self._reset_timer = threading.Timer(delay, self._reset_session)
+        self._reset_timer.start()
+
+    def _reset_session(self):
+        self._session = SESSIONS.DEFAULT_SESSION
+        self._start_time = None
+        self._reset_timer = None
+
+    def extend_delay(self, extra_seconds):
+        if self._reset_timer and self._reset_timer.is_alive() and self._start_time:
+            elapsed = time.time() - self._start_time
+            remaining = self._delay - elapsed
+            new_delay = max(remaining + extra_seconds, 0.1)  # 防止小于0
+            self._start_reset_timer(new_delay)
 
     def reset_state(self):
-        self.DiagnosticSession = SESSIONS.DEFAULT_SESSION
+        self._session = SESSIONS.DEFAULT_SESSION
         self.P2_time = 5
         self.running = False
         self.security = False
@@ -33,12 +63,14 @@ class ECU(can.Listener):
         self.moving = False
         self.dtc = None
         self.is_memory_error = False
+        self._delay = 3
+        self._reset_timer = None
+        self._start_time = None
 
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
         self.on_power_status_changed("POWER_OFF")
         time.sleep(0.1)#a simmulation for hard reset
-        self.reset_state()
         self.on_power_status_changed("POWER_ON")
         print("[ECU] Hard reboot complete.")
 
@@ -51,13 +83,15 @@ class ECU(can.Listener):
             print("[ECU] Received POWER_OFF signal, stopping ECU...")
             self.running = False
             self.start_event.clear()
-            #self.reset_state()
+            self.reset_state()
 
     def on_message_received(self, msg):
         if not self.running:
             return
         try:
-            msg.is_rx = (msg.arbitration_id != self.arbitration_id)
+            #msg.is_rx = (msg.arbitration_id != self.arbitration_id)
+            if msg.arbitration_id == self.arbitration_id:
+                return
             print(f"[ECU] Received {msg}")
             self.received_request=True
             response = handle_request_with_timeout(
@@ -108,9 +142,9 @@ class ECU(can.Listener):
         if resp is not None:
             try:
                 self.bus.send(resp)
-                print(f"[ECU] Sent response after extended processing: {resp}")
+                print(f"[ECU] Sent response: {resp}")
             except can.CanError as e:
-                print(f"[ERROR] CAN send failed (extende processing)")
+                print(f"[ERROR] CAN send failed")
 
     def handle_request(self, req):
         try:

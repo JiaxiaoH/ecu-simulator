@@ -36,7 +36,7 @@ class ButtonPush:
             button.config(text='Stop')
     @classmethod 
     def send(cls, name, bus, ecu, entry=None, send_callback=None):
-        #print(f"ECU.session = {ecu.DiagnosticSession}")
+        #print(f"ECU.session = {ecu.session}")
         if entry is not None and entry.get().strip() != "":
             try:
                 can_entry= [int(x, 16) for x in entry.get().split()]
@@ -121,7 +121,7 @@ class CanGuiApp(can.Listener):
         if msg is not None:
             wrapped = WrappedMessage.wrap_from_msg(
                 msg,
-                session=self.ecu.DiagnosticSession,
+                session=self.ecu.session,
                 security=self.ecu.security
             )
             if msg.arbitration_id==0x001:
