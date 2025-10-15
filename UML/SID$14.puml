@@ -3,7 +3,7 @@ title SID$14
 start
     partition SID$14 #LightBlue{
     repeat
-    if (、Service $14 リクエスト・メッセージを受信) then (yes)
+    if (Service $14 リクエスト・メッセージを受信) then (yes)
 
       partition checkReq #WhiteSmoke{
 

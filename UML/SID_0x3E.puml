@@ -1,0 +1,31 @@
+@startuml SID$3E
+title SID$3E
+start
+    partition SID$3E #LightBlue{
+    repeat
+    if (Service $3E リクエスト・メッセージを受信) then (yes)
+
+      partition checkReq #WhiteSmoke{
+
+        if (len(RequestMessage) < 2byte) then (yes) 
+            if (zeroSubFunction == 0x00) then (yes)
+                if(len(RequestMessage) == 2byte) then (yes)
+                        :7E 00;
+                else(no)
+                    :7F 3E 13;
+                endif
+            else(no)
+                :7F 3E 12;
+            endif
+        else (no)
+            :7F 3E 13;
+        endif
+      }
+
+    else (no)
+
+    endif
+    repeat while(TRUE)
+    }
+stop
+@enduml

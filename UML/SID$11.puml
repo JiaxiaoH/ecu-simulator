@@ -8,12 +8,12 @@ start
       partition checkReq #WhiteSmoke{
 
         if (DiagnosticSession != defaultSession) then (yes) 
-            if (len(RequestMessage) < 2byte) then (yes)
+            if (len(RequestMessage) >= 2byte) then (yes)
                 if(resetType == 01) then (yes)
                     if(len(RequestMessage) == 2byte) then (yes)
-                        if(車両運転条件の検査) then (no)
+                        if(車両運転条件の検査) then (yes)
                             :SID = $51のポジレスを返送;
-                        else(yes)
+                        else(no)
                             :NRC = $22のネガレスを返送;
                         endif
                     else(no)

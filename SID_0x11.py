@@ -13,7 +13,7 @@ class SID_0x11(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            if not cls.is_session_supported(ecu.DiagnosticSession):
+            if not cls.is_session_supported(ecu.session):
                 return cls.NegativeResponse(ecu, 0x7F)
             if cls.is_request_message_less_than_2_byte(request):
                 return cls.NegativeResponse(ecu, 0x13)
@@ -29,6 +29,6 @@ class SID_0x11(BaseSID):
                     print(f"[ERROR] SID_0X11 error: {e}")
                     import traceback
                     traceback.print_exc()
-
+    @staticmethod
     def is_resetType_supported(request):
         return request.data[1] == 0x01
