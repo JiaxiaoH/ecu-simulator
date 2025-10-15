@@ -4,7 +4,6 @@ from sessiontypes import SESSIONS
 import can
 import datetime
 class SID_0x14:
-
     @classmethod    
     def handle(cls, request, ecu):
         try:
