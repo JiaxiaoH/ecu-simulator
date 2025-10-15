@@ -32,7 +32,6 @@ class SID_0x14(BaseSID):
                     import traceback
                     traceback.print_exc()
             
-    #查找groupOfDtc是否被支持
     @staticmethod
     def is_groupOfDtc_supported(request):
         return request.data == bytes([0x14, 0xff, 0xff, 0xff])

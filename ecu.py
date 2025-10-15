@@ -5,6 +5,7 @@ import can
 from SID_0x10 import SID_0x10
 from SID_0x11 import SID_0x11
 from SID_0x14 import SID_0x14
+from SID_0x3E import SID_0x3E
 from sessiontypes import SESSIONS
 from uds_utils import handle_request_with_timeout
 import random
@@ -12,7 +13,8 @@ class ECU(can.Listener):
     SID_HANDLERS = {
         0x10: SID_0x10,
         0x11: SID_0x11,
-        0x14: SID_0x14
+        0x14: SID_0x14,
+        0x3E: SID_0x3E
     }
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
         self.energy = energy
@@ -46,13 +48,15 @@ class ECU(can.Listener):
         self._session = SESSIONS.DEFAULT_SESSION
         self._start_time = None
         self._reset_timer = None
+        print(f"[ECU] Session transitioned back to defaultSession")
 
-    def extend_delay(self, extra_seconds):
-        if self._reset_timer and self._reset_timer.is_alive() and self._start_time:
-            elapsed = time.time() - self._start_time
-            remaining = self._delay - elapsed
-            new_delay = max(remaining + extra_seconds, 0.1)  # 防止小于0
-            self._start_reset_timer(new_delay)
+    def extend_delay(self, new_delay=10):
+        self._start_reset_timer(new_delay)
+        # if self._reset_timer and self._reset_timer.is_alive() and self._start_time:
+        #     elapsed = time.time() - self._start_time
+        #     remaining = self._delay - elapsed
+        #     new_delay = max(remaining + extra_seconds, 0.1)  
+        #     self._start_reset_timer(new_delay)
 
     def reset_state(self):
         self._session = SESSIONS.DEFAULT_SESSION
