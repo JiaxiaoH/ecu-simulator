@@ -37,7 +37,7 @@ class ECU(can.Listener):
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
         self.on_power_status_changed("POWER_OFF")
-        time.sleep(1)#a simmulation for hard reset
+        time.sleep(0.1)#a simmulation for hard reset
         self.reset_state()
         self.on_power_status_changed("POWER_ON")
         print("[ECU] Hard reboot complete.")
