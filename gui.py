@@ -124,13 +124,13 @@ class CanGuiApp(can.Listener):
                 session=self.ecu.session,
                 security=self.ecu.security
             )
-            if msg.arbitration_id==0x001:
+            if msg.arbitration_id==0x7E0:
                 wrapped.is_rx = False
             else:
                 wrapped.is_rx = True
             self.disp_msg(wrapped)
     
-    def send_message(self, data, arbitration_id=0x001):
+    def send_message(self, data, arbitration_id=0x7E0):
         msg = can.Message(datetime.datetime.now().timestamp(), arbitration_id=arbitration_id, data=data, is_extended_id=False, is_rx=False)
         msg.is_rx=False
         try:

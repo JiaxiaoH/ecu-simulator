@@ -5,6 +5,7 @@ import can
 from SID_0x10 import SID_0x10
 from SID_0x11 import SID_0x11
 from SID_0x14 import SID_0x14
+from SID_0x28 import SID_0x28
 from SID_0x3E import SID_0x3E
 from sessiontypes import SESSIONS
 from uds_utils import handle_request_with_timeout
@@ -14,16 +15,18 @@ class ECU(can.Listener):
         0x10: SID_0x10,
         0x11: SID_0x11,
         0x14: SID_0x14,
+        0x28: SID_0x28,
         0x3E: SID_0x3E
     }
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
         self.energy = energy
-        self.arbitration_id = 0x002
+        self.arbitration_id = 0x7E8
         self.bus = bus
         self.frequency = frequency_hz
         self.period = 1.0 / frequency_hz
         self.start_event = threading.Event()
         self.stop_event = threading.Event()
+        self.allowed_diag_ids = [0x7E0, 0x7E8] 
         self.reset_state()
     
     @property
@@ -50,13 +53,11 @@ class ECU(can.Listener):
         self._reset_timer = None
         print(f"[ECU] Session transitioned back to defaultSession")
 
-    def extend_delay(self, new_delay=10):
+    def extend_delay(self, new_delay=30):
         self._start_reset_timer(new_delay)
-        # if self._reset_timer and self._reset_timer.is_alive() and self._start_time:
-        #     elapsed = time.time() - self._start_time
-        #     remaining = self._delay - elapsed
-        #     new_delay = max(remaining + extra_seconds, 0.1)  
-        #     self._start_reset_timer(new_delay)
+
+    def communication_control(self, enable_restrict=True):
+        self._disableRxAndTx = enable_restrict
 
     def reset_state(self):
         self._session = SESSIONS.DEFAULT_SESSION
@@ -70,6 +71,7 @@ class ECU(can.Listener):
         self._delay = 3
         self._reset_timer = None
         self._start_time = None
+        self._disableRxAndTx = False
 
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
@@ -92,6 +94,9 @@ class ECU(can.Listener):
     def on_message_received(self, msg):
         if not self.running:
             return
+        if self._disableRxAndTx:
+            if msg.arbitration_id not in self.allowed_diag_ids:
+                return 
         try:
             #msg.is_rx = (msg.arbitration_id != self.arbitration_id)
             if msg.arbitration_id == self.arbitration_id:
