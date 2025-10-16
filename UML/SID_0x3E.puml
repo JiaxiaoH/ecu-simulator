@@ -7,7 +7,7 @@ start
 
       partition checkReq #WhiteSmoke{
 
-        if (len(RequestMessage) < 2byte) then (yes) 
+        if (len(RequestMessage) >= 2byte) then (yes) 
             if (zeroSubFunction == 0x00) then (yes)
                 if(len(RequestMessage) == 2byte) then (yes)
                         :7E 00;

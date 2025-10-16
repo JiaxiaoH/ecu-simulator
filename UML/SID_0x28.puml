@@ -1,0 +1,38 @@
+@startuml SID$28
+title SID$28
+start
+    partition SID$28 #LightBlue{
+    repeat
+    if (Service $28 リクエスト・メッセージを受信) then (yes)
+
+      partition checkReq #WhiteSmoke{
+        if(Sessionが0x10、0x02、0x4C、0x4D、0x4E以外) then (yes)
+            if (len(RequestMessage) >= 2byte) then (yes) 
+                if (controlType == 0x03) then (yes)
+                    if(len(RequestMessage) == 3byte) then (yes)
+                        if(communicationType == 0x03) then (yes)
+                            : 68 03;
+                        else(no)
+                            :7F 28 31;
+                        endif
+                    else(no)
+                        :7F 28 13;
+                    endif
+                else(no)
+                    :7F 28 12;
+                endif
+            else (no)
+                :7F 28 13;
+            endif
+        else(no)
+            :7F 28 7F;
+        endif
+        }
+
+    else (no)
+
+    endif
+    repeat while(TRUE)
+    }
+stop
+@enduml
