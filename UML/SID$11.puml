@@ -33,7 +33,7 @@ start
     else (no)
 
     endif
-    repeat while(TRUE)
+    repeat while()
     }
 stop
 @enduml

@@ -1,0 +1,38 @@
+@startuml SID$19
+title SID$19
+start
+    partition SID$19 #LightBlue{
+    repeat
+    if (Service $19 リクエスト・メッセージを受信) then (yes)
+
+      partition checkReq #WhiteSmoke{
+
+        if (DiagnosticSession != programmingSession) then (yes) 
+            if (len(RequestMessage) >= 2byte) then (yes)
+                if(sub-function の検査) then (yes)
+                    if(sub-function == $01 and len(RequestMessage) == 3byte) then (yes)
+                        :59 01 DTCStatusAvailabilityMask 00  DTCCount;
+                    elseif (sub-function == $02 and len(RequestMessage) == 3byte) then (yes)
+                        :59 02 DTCStatusAvailabilityMask DTCAndStatusRecord...;
+                    elseif((sub-function == $0A) and len(RequestMessage) == 2byte) then (yes)
+                        :59 0A DTCStatusAvailabilityMask DTCAndStatusRecord...;   
+                    else(no)
+                        :7F 19 13;
+                    endif
+                else(no)
+                    :7F 19 12;
+                endif
+            else(no)
+                :7F 19 13;
+            endif
+        else (no)
+            :7F 19 7F;
+        endif
+      }
+
+    else (no)
+    endif
+    repeat while()
+    }
+stop
+@enduml
