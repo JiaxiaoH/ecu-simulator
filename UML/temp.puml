@@ -1,0 +1,48 @@
+@startuml DTC
+left to right direction
+skinparam classAttributeIconSize 0
+
+class DTC {
+    - _data: List<int>
+    + __init__(data)
+    + high: int
+    + mid: int
+    + low: int
+    + status: int
+    + testFailed: bool
+    + testFailedThisMonitoringCycle: bool
+    + pendingDTC: bool
+    + confirmedDTC: bool
+    + testNotCompletedSinceLastClear: bool
+    + testFailedSinceLastClear: bool
+    + testNotCompletedThisMonitoringCycle: bool
+    + warningIndicatorRequested: bool
+    + to_bytes(): bytes
+    + to_list(): List<int>
+    + from_dtc_string(dtc_str: str, status_byte: int = None): DTC
+}
+
+class DTCManager {
+    - _dtc_list: List<DTC>
+    + __init__(dtc_list=None)
+    + __iadd__(dtc_code: DTC)
+    + __add__(dtc_code: DTC)
+    + clear_dtc()
+    + get_dtcs(): List<DTC>
+    + report_number(mask: int): int
+    + report_dtc(mask: int): List<DTC>
+}
+
+class ECU {
+    - dtc: DTCManager
+    - _DTCStatusAvailabilityMask: int
+    - _DTCFormatIdentifier: int
+    + dtc_clear()
+    ...
+    + ...()
+}
+
+ECU "1" o-- "1" DTCManager : manages >
+DTCManager "1" *-- "*" DTC : contains >
+
+@enduml

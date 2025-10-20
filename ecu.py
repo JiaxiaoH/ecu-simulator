@@ -5,9 +5,11 @@ import can
 from SID_0x10 import SID_0x10
 from SID_0x11 import SID_0x11
 from SID_0x14 import SID_0x14
+from SID_0x19 import SID_0x19
 from SID_0x28 import SID_0x28
 from SID_0x3E import SID_0x3E
 from sessiontypes import SESSIONS
+from dtc import DTCManager, DTC
 from uds_utils import handle_request_with_timeout
 import random
 class ECU(can.Listener):
@@ -15,6 +17,7 @@ class ECU(can.Listener):
         0x10: SID_0x10,
         0x11: SID_0x11,
         0x14: SID_0x14,
+        0x19: SID_0x19,
         0x28: SID_0x28,
         0x3E: SID_0x3E
     }
@@ -27,8 +30,39 @@ class ECU(can.Listener):
         self.start_event = threading.Event()
         self.stop_event = threading.Event()
         self.allowed_diag_ids = [0x7E0, 0x7E8] 
+        self.dtc = DTCManager()
+        
+        self._DTCStatusAvailabilityMask=0x0E
+        self._DTCFormatIdentifier=0x00
+        
+        dtc1=DTC.from_dtc_string("B2B10-A3", 0x04)
+        dtc2=DTC.from_dtc_string("U0146", 0x0C)
+        dtc3=DTC.from_dtc_string("C003762", 0x08)
+        self.dtc=self.dtc+dtc1+dtc2+dtc3
+
         self.reset_state()
+
+    @property
+    def DTCStatusAvailabilityMask(self):
+        return self._DTCStatusAvailabilityMask
     
+    @property
+    def DTCFormatIdentifier(self):
+        return self._DTCFormatIdentifier
+    
+    def reset_state(self):
+        self._session = SESSIONS.DEFAULT_SESSION
+        self.P2_time = 5
+        self.running = False
+        self.security = False
+        self.received_request = False
+        self.moving = False
+        self.is_memory_error = False
+        self._delay = 3
+        self._reset_timer = None
+        self._start_time = None
+        self._disableRxAndTx = False
+
     @property
     def session(self):
         return self._session
@@ -38,6 +72,8 @@ class ECU(can.Listener):
         if value!=self._session:
             self._session=value
             self._start_reset_timer(self._delay)
+        if (value == SESSIONS.DEFAULT_SESSION) and self._disableRxAndTx:
+                self.communication_control(False)
 
     def _start_reset_timer(self, delay=3):
         if self._reset_timer and self._reset_timer.is_alive():
@@ -48,7 +84,7 @@ class ECU(can.Listener):
         self._reset_timer.start()
 
     def _reset_session(self):
-        self._session = SESSIONS.DEFAULT_SESSION
+        self.session = SESSIONS.DEFAULT_SESSION
         self._start_time = None
         self._reset_timer = None
         print(f"[ECU] Session transitioned back to defaultSession")
@@ -58,20 +94,6 @@ class ECU(can.Listener):
 
     def communication_control(self, enable_restrict=True):
         self._disableRxAndTx = enable_restrict
-
-    def reset_state(self):
-        self._session = SESSIONS.DEFAULT_SESSION
-        self.P2_time = 5
-        self.running = False
-        self.security = False
-        self.received_request = False
-        self.moving = False
-        self.dtc = None
-        self.is_memory_error = False
-        self._delay = 3
-        self._reset_timer = None
-        self._start_time = None
-        self._disableRxAndTx = False
 
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
@@ -169,7 +191,7 @@ class ECU(can.Listener):
     def dtc_clear(self):
         try:
             self.timeout_set(self.random_set())
-            self.dtc=None
+            self.dtc.clear_dtc()
             print("Success: DTC reset!")
         except Exception as e:
             self.is_memory_error=True
