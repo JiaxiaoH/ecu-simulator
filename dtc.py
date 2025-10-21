@@ -187,7 +187,7 @@ class DTC:
 class DTCManager:
     def __init__(self, dtc_list=None):
         self._dtc_list = dtc_list if dtc_list is not None else []
-    
+        
     def __iadd__(self, dtc_code: DTC):
         if dtc_code not in self._dtc_list:
             self._dtc_list.append(dtc_code)

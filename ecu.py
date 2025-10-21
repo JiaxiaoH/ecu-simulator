@@ -34,12 +34,12 @@ class ECU(can.Listener):
         
         self._DTCStatusAvailabilityMask=0x0E
         self._DTCFormatIdentifier=0x00
-        
-        dtc1=DTC.from_dtc_string("B2B10-A3", 0x04)
-        dtc2=DTC.from_dtc_string("U0146", 0x0C)
-        dtc3=DTC.from_dtc_string("C003762", 0x08)
-        self.dtc=self.dtc+dtc1+dtc2+dtc3
-
+        self._dtcstr=["B2B10-A3", "U0146-00", "C0037-62"]
+        dtc1=DTC.from_dtc_string("B2B10-A3", self.DTCStatusAvailabilityMask)
+        dtc2=DTC.from_dtc_string("U0146-00", self.DTCStatusAvailabilityMask)
+        dtc3=DTC.from_dtc_string("C0037-62", self.DTCStatusAvailabilityMask)
+        self._dtc_available_list=[]
+        self._dtc_available_list.extend([dtc1, dtc2, dtc3])
         self.reset_state()
 
     @property
@@ -49,6 +49,14 @@ class ECU(can.Listener):
     @property
     def DTCFormatIdentifier(self):
         return self._DTCFormatIdentifier
+
+    @property
+    def dtcstr(self):
+        return self._dtcstr
+        
+    @property
+    def dtc_available_list(self):
+        return self._dtc_available_list
     
     def reset_state(self):
         self._session = SESSIONS.DEFAULT_SESSION
