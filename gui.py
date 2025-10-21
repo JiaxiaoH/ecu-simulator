@@ -1,12 +1,12 @@
 #gui.py
 import can
-import threading
 import tkinter as tk
+from tkinter import *
 from tkinter import ttk
 import datetime
 import queue
 from wrapped_message import WrappedMessage
-from can import Notifier
+from dtc import DTCManager, DTC
 class ButtonPush:
     #temp method for reporting. will be deleted when creating SID$27
     @classmethod
@@ -47,6 +47,28 @@ class ButtonPush:
             if send_callback:
                 send_callback(data=can_entry)
             entry.delete(0, 'end')
+    @classmethod
+    def dtc(cls, name, ecu, root):
+        new=Toplevel(root)
+        new.geometry("350x200")
+        new.title("Create DTC")
+        label1 = tk.Label(new, text="Choose a DTC")
+        label1.grid(column=0, row=0)
+        combo1 = ttk.Combobox(new, values=ecu.dtcstr, state="readonly")
+        combo1.grid(column=0, row=1)
+        combo1.current(0)
+
+        label2 = tk.Label(new, text="Choose a status")
+        label2.grid(column=2, row=0)
+        combo2 = ttk.Combobox(new, values=["04", "08", "0C"], state="readonly")
+        combo2.grid(column=2, row=1)
+        combo2.current(0)
+
+        def send_message():
+            dtc=DTC.from_dtc_string(combo1.get(), int(combo2.get(), 16))
+            ecu.dtc=ecu.dtc+dtc
+        send_button = tk.Button(new, text="Send", command=send_message)
+        send_button.grid(column=4, row=1)
 
 class CanGuiApp(can.Listener):
     def __init__(self, bus, ecu_interface, energy_interface):
@@ -101,11 +123,13 @@ class CanGuiApp(can.Listener):
         self.drive_button = tk.Button(self.root, text="DRIVE", command=lambda: ButtonPush.drive("DRIVE", self.ecu, self.drive_button))
         self.drive_button.place(relx=0.1, rely=0.9, anchor='w')
 
+        self.dtc_button = tk.Button(self.root, text="DTC", command=lambda: ButtonPush.dtc("DTC", self.ecu, self.root))
+        self.dtc_button.place(relx=0.5, rely=0.9, anchor='e')
+
     def run(self):
         self.root.mainloop()
 
     def disp_msg(self, wmsg):
-        #formatted = trans_msg(wmsg)
         formatted = wmsg
         if formatted:
             self.msg_queue.put(formatted)
@@ -145,7 +169,7 @@ class CanGuiApp(can.Listener):
     def on_close(self):
         try:
             if self.ecu is not None:
-                self.ecu.stop()                # 通知 ECU 退出
+                self.ecu.stop()                
                 self.ecu.ecu_thread.join(timeout=1)
             print("ECU test finished.")
         except Exception as e:

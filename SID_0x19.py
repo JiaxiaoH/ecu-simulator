@@ -38,8 +38,8 @@ class SID_0x19(BaseSID):
                      return cls.NegativeResponse(ecu, 0x13)
             elif cls.is_request_message_2_byte(request):
                 if request.data[1]==0x0A:#reportSupportedDTC
-                    DTCAndStatusRecord=cls.reportSupportedDTC(ecu)
-                    res=[0x59, 0x0A, ecu.DTCStatusAvailabilityMask]+DTCAndStatusRecord
+                    DTCSupported=cls.reportSupportedDTC(ecu)
+                    res=[0x59, 0x0A, ecu.DTCStatusAvailabilityMask]+DTCSupported
                     return cls.PositiveResponse(ecu, res)
                 else:  
                     return cls.NegativeResponse(ecu, 0x13)
@@ -61,7 +61,7 @@ class SID_0x19(BaseSID):
     
     @staticmethod
     def reportSupportedDTC(ecu):
-         return ecu.dtc.report_dtc(0xFF)
+         return [item for sublist in ecu.dtc_available_list for item in sublist]
     
     @staticmethod
     def is_subfuncs_supported(request):

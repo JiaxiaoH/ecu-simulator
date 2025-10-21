@@ -1,0 +1,35 @@
+@startuml SID$85
+title SID$85
+start
+    partition SID$85 #LightBlue{
+    repeat
+    if (Service $85 リクエスト・メッセージを受信) then (yes)
+
+      partition checkReq #WhiteSmoke{
+
+        if (DiagnosticSession != defaultSession/programmingSessionn / FOTAInstall&ActivateSession /FOTAActivateSession) then (yes) 
+            if (len(RequestMessage) >= 2byte) then (yes)
+                if(DTCSettingType == 02) then (yes)
+                    if(len(RequestMessage) == 2byte) then (yes)
+                        :"C5 02"を返送
+                    else(no)
+                        :"7F 85 13"を返送;
+                    endif
+                else(no)
+                    :"7F 85 12"を返送;
+                endif
+            else(no)
+                :"7F 85 13"を返送;
+            endif
+        else (no)
+            :"7F 85 7F"を返送;
+        endif
+      }
+
+    else (no)
+
+    endif
+    repeat while()
+    }
+stop
+@enduml
