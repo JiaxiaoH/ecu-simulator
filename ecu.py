@@ -8,6 +8,7 @@ from SID_0x14 import SID_0x14
 from SID_0x19 import SID_0x19
 from SID_0x28 import SID_0x28
 from SID_0x3E import SID_0x3E
+from SID_0x85 import SID_0x85
 from sessiontypes import SESSIONS
 from dtc import DTCManager, DTC
 from uds_utils import handle_request_with_timeout
@@ -19,7 +20,8 @@ class ECU(can.Listener):
         0x14: SID_0x14,
         0x19: SID_0x19,
         0x28: SID_0x28,
-        0x3E: SID_0x3E
+        0x3E: SID_0x3E,
+        0x85: SID_0x85
     }
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
         self.energy = energy
@@ -81,7 +83,9 @@ class ECU(can.Listener):
             self._session=value
             self._start_reset_timer(self._delay)
         if (value == SESSIONS.DEFAULT_SESSION) and self._disableRxAndTx:
-                self.communication_control(False)
+            self.communication_control(False)
+        if (value == SESSIONS.DEFAULT_SESSION):
+            self.dtc.dtc_setting=True
 
     def _start_reset_timer(self, delay=3):
         if self._reset_timer and self._reset_timer.is_alive():
@@ -102,6 +106,9 @@ class ECU(can.Listener):
 
     def communication_control(self, enable_restrict=True):
         self._disableRxAndTx = enable_restrict
+
+    def dtc_setting(self):
+        self.dtc._dtc_setting = False
 
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
@@ -128,7 +135,6 @@ class ECU(can.Listener):
             if msg.arbitration_id not in self.allowed_diag_ids:
                 return 
         try:
-            #msg.is_rx = (msg.arbitration_id != self.arbitration_id)
             if msg.arbitration_id == self.arbitration_id:
                 return
             print(f"[ECU] Received {msg}")
@@ -149,7 +155,6 @@ class ECU(can.Listener):
     def run(self):
         print("ECU is ready, waiting for power signal...")
         print(f"bus.channel_info = {self.bus.channel_info}")
-        #last_status = None
         while not self.stop_event.is_set():
             if self.running:
                 start_time = time.time()
