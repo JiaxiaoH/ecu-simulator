@@ -4,8 +4,6 @@ import math
 
 class DTC:
     def __init__(self, data=[0x00, 0x00, 0x00, 0x00]):
-        # self._DTCStatusavailabilityMask=0x0E
-        # self._DTCFormatIdentifier=0x00
         if not isinstance(data, (bytes, bytearray, list, tuple)):
             raise TypeError("data must be bytes, bytearray, list, or tuple")
         if len(data) != 4:
@@ -14,14 +12,6 @@ class DTC:
             if not (0 <= b <= 0xFF):
                 raise ValueError("each byte must be 0-255")
         self._data = list(data)
-
-    # @property
-    # def DTCStatusAvailabilityMask(self):
-    #     return self._DTCStatusAvailabilityMask
-    
-    # @property
-    # def DTCFormatIdentifier(self):
-    #     return self._DTCFormatIdentifier
     
     def _set_byte(self, index, value):
         if not (0 <= value <= 0xFF):
@@ -184,15 +174,31 @@ class DTC:
         #     self._data[3] = 0x00
         return obj
 
+def check_dtc_setting(method):
+    def wrapper(self, *args, **kwargs):
+        if not self._dtc_setting:
+            if method.__name__ == "__iadd__":
+                return self
+            elif method.__name__ == "__add__":
+                return self
+            else:
+                # 
+                return None
+        return method(self, *args, **kwargs)
+    return wrapper
+
 class DTCManager:
     def __init__(self, dtc_list=None):
         self._dtc_list = dtc_list if dtc_list is not None else []
-        
+        self._dtc_setting = True 
+
+    @check_dtc_setting
     def __iadd__(self, dtc_code: DTC):
         if dtc_code not in self._dtc_list:
             self._dtc_list.append(dtc_code)
         return self
 
+    @check_dtc_setting
     def __add__(self, dtc_code: DTC):
         new_list = self._dtc_list.copy()
         if dtc_code not in new_list:
@@ -209,8 +215,13 @@ class DTCManager:
     def dtc_list(self):
         return self._dtc_list.copy()    
     
-    # def report_number(self):
-    #     return len(self._dtc_list)
+    @property
+    def dtc_setting(self):
+        return self._dtc_setting
+    
+    @dtc_setting.setter
+    def dtc_setting(self, value):
+        self._dtc_setting=value
 
     def report_number(self, mask: int) -> int:
         count = 0
