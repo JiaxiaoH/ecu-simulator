@@ -164,7 +164,6 @@ class CanGuiApp(can.Listener):
 
     def stop(self):
         self.running = False
-        #self.recv_thread.join(timeout=1)
 
     def on_close(self):
         try:

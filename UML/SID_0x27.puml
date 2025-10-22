@@ -1,0 +1,89 @@
+@startuml SID$27
+title SID$27
+start
+    partition SID$27 #LightBlue{
+    repeat
+    if (Service $27 リクエスト・メッセージを受信) then (yes)
+
+      partition checkReq #WhiteSmoke{
+
+        if (DiagnosticSession != defaultSession/programmingSessionn) then (yes) 
+            if (len(RequestMessage) >= 2byte) then (yes)
+                if(check(securityAccessType)) then (yes)
+                    if(securityAccessType == requestSeed) then (yes)
+                        if(len(RequestMessage) != 2byte) then (yes)
+                            :"7F 28 13"を返送;
+                        elseif(1回以上の不正アクセスが実行されていた) then (yes)
+                            :"7F 28 37"を返送;
+                        elseif(DTIGON経過していない) then (yes)
+                            :"7F 28 37"を返送;
+                        elseif(セキュリティ解除) then (yes)
+                            if(securityType == TypeIV) then (yes)
+                                :"67 41 00 00 00 00 00"を返送;
+                            elseif(securityType == TypeV) then (yes)
+                                :"67 07 00 00 00 00"を返送;
+                            elseif(securityType == TypeX) then (yes)
+                                :"67 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"を返送;
+                            endif
+                        else(no)
+                            if(securityType == TypeIV) then (yes)
+                                :"67 41 [RN4] [SC]"を返送;
+                            elseif(securityType == TypeV) then (yes)
+                                :"67 07 [RN2] [SC2]"を返送;
+                            elseif(securityType == TypeX) then (yes)
+                                :"67 31 [securitySeed] [securityCode]"を返送;
+                            endif
+                        endif
+                    elseif(securityAccessType == sendKey) then(yes)
+                        if(セキュリティ解除) then (yes)
+                           if(securityType == TypeIV) then (yes)
+                                :"67 42 00 00 00 00 00"を返送;
+                            elseif(securityType == TypeV) then (yes)
+                                :"67 08 00 00 00 00"を返送;
+                            elseif(securityType == TypeX) then (yes)
+                                :"67 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"を返送;
+                            endif  
+                        elseif(Seed 値返送が未実行) then (yes) 
+                            :"7F 27 24"を返送;
+                        elseif(リクエスト･メッセージ長が算出した値と一致しない) then (yes)
+                            :"7F 27 13"を返送;   
+                        else(no)
+                            if(securityType == TypeIV) then (yes)
+                                if(受信したKC2/KC4 != 算出したKC2/KC4) then (yes)
+                                    :"7F 27 36"を返送;
+                                else(no)
+                                    :"67 42 [KC4] [SC]"を返送;
+                                endif
+                            elseif(securityType == TypeV) then (yes)
+                                if(受信したKC2/KC4 != 算出したKC2/KC4) then (yes)
+                                    :"7F 27 36"を返送;
+                                else(no)
+                                    :"67 08 [KC2] [SC2]"を返送;
+                                endif
+                            elseif(securityType == TypeX) then (yes)
+                                if(受信したKC2/KC4 != 算出したKC2/KC4) then (yes)
+                                    :"7F 27 36"を返送;
+                                else(no)
+                                    :"67 32 [securityAccessDataRecord]"を返送;
+                                endif
+                            endif                      
+                        endif
+                    endif    
+                else(no)
+                    :"7F 28 12"を返送;
+                endif
+            else(no)
+                :"7F 28 13"を返送;
+            endif
+        else (no)
+            :"7F 28 7F"を返送;
+        endif
+      }
+
+    else (no)
+
+    endif
+    repeat while()
+    }
+stop
+@enduml

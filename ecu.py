@@ -211,10 +211,7 @@ class ECU(can.Listener):
             print("Failed: DTC reset!")
     
     def random_set(self, rn=0.2):
-        if random.random() < rn:  
-            return True
-        else:
-            return False
+         return random.random() < rn
     
     def timeout_set(self, flag):
         if flag:
