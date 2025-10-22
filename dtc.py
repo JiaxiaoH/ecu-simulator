@@ -1,6 +1,5 @@
 #dtc.py
 import re
-import math
 
 class DTC:
     def __init__(self, data=[0x00, 0x00, 0x00, 0x00]):
