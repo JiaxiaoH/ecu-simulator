@@ -12,11 +12,11 @@ start
                 if(check(securityAccessType)) then (yes)
                     if(securityAccessType == requestSeed) then (yes)
                         if(len(RequestMessage) != 2byte) then (yes)
-                            :"7F 28 13"を返送;
+                            :"7F 27 13"を返送;
                         elseif(1回以上の不正アクセスが実行されていた) then (yes)
-                            :"7F 28 37"を返送;
+                            :"7F 27 37"を返送;
                         elseif(DTIGON経過していない) then (yes)
-                            :"7F 28 37"を返送;
+                            :"7F 27 37"を返送;
                         elseif(セキュリティ解除) then (yes)
                             if(securityType == TypeIV) then (yes)
                                 :"67 41 00 00 00 00 00"を返送;
@@ -70,13 +70,13 @@ start
                         endif
                     endif    
                 else(no)
-                    :"7F 28 12"を返送;
+                    :"7F 27 12"を返送;
                 endif
             else(no)
-                :"7F 28 13"を返送;
+                :"7F 27 13"を返送;
             endif
         else (no)
-            :"7F 28 7F"を返送;
+            :"7F 27 7F"を返送;
         endif
       }
 

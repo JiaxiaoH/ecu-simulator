@@ -6,23 +6,28 @@ from SID_0x10 import SID_0x10
 from SID_0x11 import SID_0x11
 from SID_0x14 import SID_0x14
 from SID_0x19 import SID_0x19
+from SID_0x27 import SID_0x27
 from SID_0x28 import SID_0x28
 from SID_0x3E import SID_0x3E
 from SID_0x85 import SID_0x85
 from sessiontypes import SESSIONS
+from security import SecurityType
 from dtc import DTCManager, DTC
 from uds_utils import handle_request_with_timeout
 import random
+
 class ECU(can.Listener):
     SID_HANDLERS = {
         0x10: SID_0x10,
         0x11: SID_0x11,
         0x14: SID_0x14,
         0x19: SID_0x19,
+        0x27: SID_0x27,
         0x28: SID_0x28,
         0x3E: SID_0x3E,
         0x85: SID_0x85
     }
+
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
         self.energy = energy
         self.arbitration_id = 0x7E8
@@ -33,7 +38,9 @@ class ECU(can.Listener):
         self.stop_event = threading.Event()
         self.allowed_diag_ids = [0x7E0, 0x7E8] 
         self.dtc = DTCManager()
-        
+
+        self._timer_lock=threading.Lock()
+
         self._DTCStatusAvailabilityMask=0x0E
         self._DTCFormatIdentifier=0x00
         self._dtcstr=["B2B10-A3", "U0146-00", "C0037-62"]
@@ -42,6 +49,9 @@ class ECU(can.Listener):
         dtc3=DTC.from_dtc_string("C0037-62", self.DTCStatusAvailabilityMask)
         self._dtc_available_list=[]
         self._dtc_available_list.extend([dtc1, dtc2, dtc3])
+        self.key=None
+        self._reset_timer = None
+        self._start_time = None
         self.reset_state()
 
     @property
@@ -64,14 +74,15 @@ class ECU(can.Listener):
         self._session = SESSIONS.DEFAULT_SESSION
         self.P2_time = 5
         self.running = False
-        self.security = False
+        self.security = SecurityType.FALSE
         self.received_request = False
         self.moving = False
         self.is_memory_error = False
         self._delay = 3
-        self._reset_timer = None
-        self._start_time = None
         self._disableRxAndTx = False
+        self.illegal_access=0
+        self.power_on_time = None
+        self.dt_igon = 0.0  
 
     @property
     def session(self):
@@ -86,14 +97,23 @@ class ECU(can.Listener):
             self.communication_control(False)
         if (value == SESSIONS.DEFAULT_SESSION):
             self.dtc.dtc_setting=True
+            self.security=SecurityType.FALSE
 
     def _start_reset_timer(self, delay=3):
-        if self._reset_timer and self._reset_timer.is_alive():
-            self._reset_timer.cancel()
-        self._delay = delay
-        self._start_time = time.time()
-        self._reset_timer = threading.Timer(delay, self._reset_session)
-        self._reset_timer.start()
+        with self._timer_lock:
+            if self._reset_timer and self._reset_timer.is_alive():
+                self._reset_timer.cancel()
+            self._delay = delay
+            self._start_time = time.time()
+            self._reset_timer = threading.Timer(delay, self._reset_session_safe)
+            self._reset_timer.name="ECU_Reset_Timer"
+            self._reset_timer.daemon=True
+            self._reset_timer.start()
+
+    def _reset_session_safe(self):
+        #with self._timer_lock:
+        if self._reset_timer and threading.current_thread() is self._reset_timer:
+            self._reset_session()
 
     def _reset_session(self):
         self.session = SESSIONS.DEFAULT_SESSION
@@ -101,7 +121,7 @@ class ECU(can.Listener):
         self._reset_timer = None
         print(f"[ECU] Session transitioned back to defaultSession")
 
-    def extend_delay(self, new_delay=30):
+    def extend_delay(self, new_delay=60):
         self._start_reset_timer(new_delay)
 
     def communication_control(self, enable_restrict=True):
@@ -113,7 +133,7 @@ class ECU(can.Listener):
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
         self.on_power_status_changed("POWER_OFF")
-        time.sleep(0.1)#a simmulation for hard reset
+        time.sleep(1)#a simmulation for hard reset
         self.on_power_status_changed("POWER_ON")
         print("[ECU] Hard reboot complete.")
 
@@ -122,15 +142,26 @@ class ECU(can.Listener):
             print("[ECU] Received POWER_ON signal, starting ECU...")
             self.running = True
             self.start_event.set()
+            self.stop_event.clear() 
+            self.power_on_time = time.time()
+            self.dt_igon = 0.0
+            self.start_thread() 
         elif status == "POWER_OFF":
             print("[ECU] Received POWER_OFF signal, stopping ECU...")
             self.running = False
             self.start_event.clear()
+            self.stop_event.set()
             self.reset_state()
+            with self._timer_lock:
+                if self._reset_timer:
+                    self._reset_timer.cancel()
+                    try:
+                        self._reset_timer.join(timeout=1)
+                    except RuntimeError:
+                        pass
+                    self._reset_timer = None
 
     def on_message_received(self, msg):
-        if not self.running:
-            return
         if self._disableRxAndTx:
             if msg.arbitration_id not in self.allowed_diag_ids:
                 return 
@@ -139,14 +170,18 @@ class ECU(can.Listener):
                 return
             print(f"[ECU] Received {msg}")
             self.received_request=True
+            if len(msg.data) >= 2 and msg.data[0] == 0x27 and msg.data[1] in (0x07, 0x31, 0x41):
+                timeout = 0.1
+            else:
+                timeout = self.P2_time
             response = handle_request_with_timeout(
                 request=msg,
                 handler_func=self.handle_request,
-                timeout=self.P2_time,
+                timeout=timeout,
                 on_timeout=self.on_timeout,
                 on_finish=self.on_finish
             )
-            if response:
+            if response is not None:
                 self.bus.send(response)
                 self.received_request=False
         except Exception as e:        
@@ -157,6 +192,7 @@ class ECU(can.Listener):
         print(f"bus.channel_info = {self.bus.channel_info}")
         while not self.stop_event.is_set():
             if self.running:
+                self.igon_timer()
                 start_time = time.time()
                 if not self.received_request:
                     elapsed = time.time() - start_time
@@ -171,6 +207,11 @@ class ECU(can.Listener):
 
     def stop(self):
         self.stop_event.set()
+
+    def start_thread(self):
+        if not hasattr(self, '_thread') or not self._thread.is_alive():
+            self._thread = threading.Thread(target=self.run, daemon=True, name="ECU_Thread")
+            self._thread.start()
 
     def on_timeout(self, req):
         print("[ECU] P2 timeout!")
@@ -203,7 +244,7 @@ class ECU(can.Listener):
     
     def dtc_clear(self):
         try:
-            self.timeout_set(self.random_set())
+            #self.timeout_set(self.random_set())
             self.dtc.clear_dtc()
             print("Success: DTC reset!")
         except Exception as e:
@@ -216,3 +257,12 @@ class ECU(can.Listener):
     def timeout_set(self, flag):
         if flag:
             time.sleep(self.P2_time+1)
+    
+    def igon_timer(self):
+        if self.power_on_time is None:
+            return
+        try:
+            self.dt_igon = time.time() - self.power_on_time
+        except TypeError as e:
+            self.dt_igon = 0.0
+            print(f"[ECU]Error: {e}")

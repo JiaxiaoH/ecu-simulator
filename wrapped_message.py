@@ -3,11 +3,6 @@ import datetime
 
 class WrappedMessage(can.Message):
     def __init__(self, *, session=None, security=None, **kwargs):
-        """
-        参数:
-            session/security: ECU 的状态信息
-            kwargs: 所有传给 can.Message 的参数，如 arbitration_id, data 等
-        """
         super().__init__(**kwargs)
         self.session = session
         self.security = security

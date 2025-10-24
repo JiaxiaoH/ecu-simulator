@@ -32,5 +32,5 @@ def handle_request_with_timeout(request, handler_func, timeout, on_timeout, on_f
     def timeout_checker():
         if not finished_event.wait(timeout):
             on_timeout(request)
-    threading.Thread(target=timeout_checker).start()
+    threading.Thread(target=timeout_checker, name="TimeoutChecker").start()
 

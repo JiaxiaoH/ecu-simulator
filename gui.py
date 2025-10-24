@@ -9,14 +9,14 @@ from wrapped_message import WrappedMessage
 from dtc import DTCManager, DTC
 class ButtonPush:
     #temp method for reporting. will be deleted when creating SID$27
-    @classmethod
-    def security(cls, name, ecu):
-        if ecu.security==False:
-            ecu.security=True
-        elif ecu.security==True:
-            ecu.security=False
-        else:
-            ecu.security=False
+    # @classmethod
+    # def security(cls, name, ecu):
+    #     if ecu.security==False:
+    #         ecu.security=True
+    #     elif ecu.security==True:
+    #         ecu.security=False
+    #     else:
+    #         ecu.security=False
     @classmethod
     def battery(cls, name, ecu, energy, button):
         if energy.status == 'POWER_ON':
@@ -117,8 +117,8 @@ class CanGuiApp(can.Listener):
         self.power_button = tk.Button(self.root, text="POWER", command=lambda: ButtonPush.battery("POWER", self.ecu, self.energy, self.power_button))
         self.power_button.place(relx=0.1, rely=0.1, anchor='w')
         
-        self.security_button = tk.Button(self.root, text="Security", command=lambda: ButtonPush.security("Security", self.ecu))
-        self.security_button.place(relx=0.9, rely=0.9, anchor='e')
+        # self.security_button = tk.Button(self.root, text="Security", command=lambda: ButtonPush.security("Security", self.ecu))
+        # self.security_button.place(relx=0.9, rely=0.9, anchor='e')
 
         self.drive_button = tk.Button(self.root, text="DRIVE", command=lambda: ButtonPush.drive("DRIVE", self.ecu, self.drive_button))
         self.drive_button.place(relx=0.1, rely=0.9, anchor='w')
@@ -169,7 +169,7 @@ class CanGuiApp(can.Listener):
         try:
             if self.ecu is not None:
                 self.ecu.stop()                
-                self.ecu.ecu_thread.join(timeout=1)
+                #self.ecu.ecu_thread.join(timeout=1)
             print("ECU test finished.")
         except Exception as e:
             print("Error stopping ECU:", e)
