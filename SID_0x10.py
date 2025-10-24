@@ -3,6 +3,7 @@ import time
 from sessiontypes import SESSIONS 
 import can
 import datetime
+from security import SecurityType
 class SID_0x10:
     AvailableSubFuncs={
         SESSIONS.DEFAULT_SESSION,
@@ -61,7 +62,7 @@ class SID_0x10:
                 return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x7F, 0x10, 0x7E], is_extended_id=False, is_rx=True)
             if not cls.is_request_message_2_byte(request):
                 return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x7F, 0x10, 0x13], is_extended_id=False, is_rx=True)
-            if (not ecu.security) and request.data[1]==0x4F:
+            if (ecu.security == SecurityType.FALSE) and request.data[1]==0x4F:
                 return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x7F, 0x10, 0x33], is_extended_id=False, is_rx=True)
             ecu.session=request.data[1]
             return can.Message(timestamp=datetime.datetime.now().timestamp(), arbitration_id=ecu.arbitration_id, data=[0x50, request.data[1], 0x00, 0x32, 0x01, 0xF4], is_extended_id=False, is_rx=True)

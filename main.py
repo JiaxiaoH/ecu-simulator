@@ -11,8 +11,6 @@ def main():
     ecu = ECU(energy=energy, bus=bus)
     app = CanGuiApp(bus=bus, ecu_interface=ecu, energy_interface=energy)
     notifier = can.Notifier(bus, [ecu, app])
-    ecu_thread = threading.Thread(target=ecu.run)
-    ecu_thread.start()
     app.run()
     notifier.stop()
 

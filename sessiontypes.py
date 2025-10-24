@@ -1,3 +1,4 @@
+#sessiontypes.py
 class SESSIONS:
     DEFAULT_SESSION = 0x01
     PROGRAMMING_SESSION = 0x02
