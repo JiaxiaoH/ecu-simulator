@@ -1,11 +1,13 @@
 # sid_0x27.py
 # skip TypeIV
+from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
-from uds_sid import BaseSID
+from .uds_sid import BaseSID
 from security import SecurityType
 import secrets
 from Crypto.Cipher import AES
 from keys import AES_KEY
+SID = 0x27
 class SID_0x27(BaseSID):
     SUPPORTED_SESSIONS={
         #SESSIONS.DEFAULT_SESSION,
@@ -140,3 +142,5 @@ class SID_0x27(BaseSID):
         cipher = AES.new(key_bytes, AES.MODE_ECB)
         encrypted = cipher.encrypt(data_bytes)
         return list(encrypted)
+    
+register_sid(SID, SID_0x27)

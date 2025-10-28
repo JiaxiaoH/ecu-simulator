@@ -1,0 +1,39 @@
+@startuml SID$22
+title SID$22
+start
+:SID$22を受信した;
+if(リクエスト･メッセージ長の検査) then(yes)
+    :dataIdentifier の取得;
+    while(残りの dataIdentifierがある)is(yes)
+        if(dataIdentifierがサポートされる) then (yes)
+            if(DiagnosticSession の検査) then (yes)
+                if(セキュリティの検査) then (yes)
+                    if(dataIdentifierに車両運転条件があり、かつ、現在の車両運転条件が実行許可条件外である場合) then (yes)
+                        if(dataIdentifierに情報出力の拒絶条件があり、かつ、ECU が現在その状態になっている場合)then(yes)
+                            :continue;
+                        else(no)
+                            :"7F 22 10"を返送;
+                            stop
+                        endif
+                    else(no)
+                        :"7F 22 22"を返送;
+                        stop
+                    endif
+                else(no)
+                    :"7F 22 33"を返送;
+                    stop
+                endif
+            else(no)
+                :skip;
+            endif
+        else(no)
+            :skip;
+        endif
+    endwhile
+    :"62 [Supported DID(MSB), Supported DID, DataA, DataB, DataC, DataD]..."を返送;
+    stop
+else(no)
+    :"7F 27 13"を返送;
+    stop
+endif
+@enduml

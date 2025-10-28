@@ -1,6 +1,8 @@
 # sid_0x19.py
+from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
-from uds_sid import BaseSID
+from .uds_sid import BaseSID
+SID = 0x19
 class SID_0x19(BaseSID):
     AvailableSubFuncs={
         0x01,
@@ -66,3 +68,5 @@ class SID_0x19(BaseSID):
     @staticmethod
     def is_subfuncs_supported(request):
         return request.data[1] in SID_0x19.AvailableSubFuncs
+    
+register_sid(SID, SID_0x19)

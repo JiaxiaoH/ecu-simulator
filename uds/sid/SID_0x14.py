@@ -1,6 +1,8 @@
 # sid_0x14.py
+from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
-from uds_sid import BaseSID
+from .uds_sid import BaseSID
+SID = 0x14
 class SID_0x14(BaseSID):
     SUPPORTED_SESSIONS={
         SESSIONS.DEFAULT_SESSION,
@@ -35,3 +37,5 @@ class SID_0x14(BaseSID):
     @staticmethod
     def is_groupOfDtc_supported(request):
         return request.data == bytes([0x14, 0xff, 0xff, 0xff])
+
+register_sid(SID, SID_0x14)

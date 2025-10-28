@@ -1,8 +1,11 @@
-# sid_0x11.py
+# sid_0x3E.py
+from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
-from uds_sid import BaseSID
-class SID_0x11(BaseSID):
+from .uds_sid import BaseSID
+SID = 0x3E
+class SID_0x3E(BaseSID):
     SUPPORTED_SESSIONS={
+        SESSIONS.DEFAULT_SESSION,
         SESSIONS.PROGRAMMING_SESSION,
         SESSIONS.EXTENDED_SESSION,
         SESSIONS.ENGINEERING_SESSION,
@@ -13,22 +16,24 @@ class SID_0x11(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            if not cls.is_session_supported(ecu.session):
-                return cls.NegativeResponse(ecu, 0x7F)
             if cls.is_request_message_less_than_2_byte(request):
                 return cls.NegativeResponse(ecu, 0x13)
-            if not cls.is_resetType_supported(request):
+            if not cls.is_zeroSubFunction_supported(request):
                 return cls.NegativeResponse(ecu, 0x12)
             if not cls.is_request_message_2_byte(request):
-                return cls.NegativeResponse(ecu, 0x13)
-            if cls.is_car_moving(ecu):
-                return cls.NegativeResponse(ecu, 0x22) 
-            ecu.hard_reset()
-            return cls.PositiveResponse(ecu, [0x51, 0x01])
+                 return cls.NegativeResponse(ecu, 0x13)        
+            
+            ecu.extend_delay()
+
+            return cls.PositiveResponse(ecu, [0x7E, 0x00])      
+            
         except Exception as e:
-                    print(f"[ERROR] SID_0X11 error: {e}")
+                    print(f"[ERROR] SID_0X3E error: {e}")
                     import traceback
                     traceback.print_exc()
+            
     @staticmethod
-    def is_resetType_supported(request):
-        return request.data[1] == 0x01
+    def is_zeroSubFunction_supported(request):
+        return request.data[1] == 0x00
+
+register_sid(SID, SID_0x3E)

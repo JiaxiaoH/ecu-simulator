@@ -1,9 +1,10 @@
 # sid_0x10.py
-import time
+from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
 import can
 import datetime
 from security import SecurityType
+SID = 0x10
 class SID_0x10:
     AvailableSubFuncs={
         SESSIONS.DEFAULT_SESSION,
@@ -100,3 +101,5 @@ class SID_0x10:
     #查找request message是否为2byte
     def is_request_message_2_byte(request):
         return len(request.data) == 2
+
+register_sid(SID, SID_0x10)

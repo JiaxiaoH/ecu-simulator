@@ -1,0 +1,19 @@
+ranges:
+  Normal:
+    - { start: 0xF400, end: 0xF40F, default_length: 2, type: static, default_value: "0000" }
+  TestResults:
+    - { start: 0xF600, end: 0xF6FF, default_length: 2, type: static, default_value: "0000" }
+  VehicleInformation:
+    - { start: 0xF800, end: 0xF8FF, default_length: 2, type: static, default_value: "0000" }
+
+templates:
+  - category: DataStream
+    pattern: "Sensor_{index}"
+    start_id: 0xF700
+    count: 256
+    length: 4
+    type: function
+    func_name: get_sensor_data
+
+specific:
+  - []

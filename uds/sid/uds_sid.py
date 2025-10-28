@@ -10,6 +10,9 @@ class BaseSID:
     def is_request_message_less_than_2_byte(request):
         return len(request.data) < 2  
     @staticmethod
+    def is_request_message_less_than_3_byte(request):
+        return len(request.data) < 3  
+    @staticmethod
     def is_request_message_2_byte(request):
         return len(request.data) == 2
     @staticmethod
@@ -18,6 +21,9 @@ class BaseSID:
     @staticmethod
     def is_request_message_4_byte(request):
         return len(request.data) == 4
+    staticmethod
+    def is_request_message_even(request):
+        return len(request.data) % 2 == 0
     @staticmethod
     def is_car_moving(ecu):
          return ecu.moving
