@@ -2,14 +2,8 @@
 import threading
 import time
 import can
-from SID_0x10 import SID_0x10
-from SID_0x11 import SID_0x11
-from SID_0x14 import SID_0x14
-from SID_0x19 import SID_0x19
-from SID_0x27 import SID_0x27
-from SID_0x28 import SID_0x28
-from SID_0x3E import SID_0x3E
-from SID_0x85 import SID_0x85
+import uds.sid
+from uds.sid_registry import get_handler, SID_HANDLERS
 from sessiontypes import SESSIONS
 from security import SecurityType
 from dtc import DTCManager, DTC
@@ -17,18 +11,8 @@ from uds_utils import handle_request_with_timeout
 import random
 
 class ECU(can.Listener):
-    SID_HANDLERS = {
-        0x10: SID_0x10,
-        0x11: SID_0x11,
-        0x14: SID_0x14,
-        0x19: SID_0x19,
-        0x27: SID_0x27,
-        0x28: SID_0x28,
-        0x3E: SID_0x3E,
-        0x85: SID_0x85
-    }
-
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
+        self.SID_HANDLERS=SID_HANDLERS
         self.energy = energy
         self.arbitration_id = 0x7E8
         self.bus = bus
@@ -133,7 +117,7 @@ class ECU(can.Listener):
     def hard_reset(self):
         print("[ECU] Performing hard reset...")
         self.on_power_status_changed("POWER_OFF")
-        time.sleep(1)#a simmulation for hard reset
+        time.sleep(1)#a time simmulation for hard reset
         self.on_power_status_changed("POWER_ON")
         print("[ECU] Hard reboot complete.")
 

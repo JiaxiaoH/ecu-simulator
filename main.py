@@ -1,8 +1,5 @@
 from energy import Energy
 from ecu import ECU
-import threading
-import tkinter as tk
-from tkinter import ttk
 import can
 from gui import CanGuiApp
 def main():
