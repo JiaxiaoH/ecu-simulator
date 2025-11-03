@@ -1,0 +1,575 @@
+{
+  "specific": [
+    {
+      "id": 18677,
+      "name": "Variant Code",
+      "type": "composite",
+      "supported_services": [
+        34,
+        46
+      ],
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_security_0x2E": [
+        "TypeV",
+        "TypeX"
+      ],
+      "supported_driving": "all",
+      "structure": [
+        {
+          "name": "VC_Status",
+          "type": "dynamic",
+          "source": "read_VC_Status",
+          "range": "0x00-0x00"
+        },
+        {
+          "name": "VC_Code",
+          "type": "dynamic",
+          "source": "read_VC_Code",
+          "range": "0x01-0x05"
+        },
+        {
+          "name": "Reserved",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x06-0x37"
+        }
+      ]
+    },
+    {
+      "id": 18607,
+      "name": "Variant Parts Number",
+      "type": "composite",
+      "supported_services": [
+        34
+      ],
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all",
+      "structure": [
+        {
+          "name": "VPN_Length",
+          "type": "dynamic",
+          "source": "read_VPN_Length",
+          "range": "0x00-0x00"
+        },
+        {
+          "name": "VPN_Id",
+          "type": "dynamic",
+          "source": "read_VPN_Id",
+          "range": "0x01-0x0C"
+        },
+        {
+          "name": "Reserved",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x0D-0x37"
+        }
+      ]
+    },
+    {
+      "id": 41344,
+      "name": "ECU ID",
+      "type": "static",
+      "value": [
+        0,
+        38,
+        0,
+        0,
+        82,
+        0,
+        32,
+        0
+      ],
+      "supported_services": [
+        34
+      ],
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all"
+    },
+    {
+      "id": 41346,
+      "name": "Current VehicleStatus",
+      "type": "composite",
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_services": [
+        34
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all",
+      "structure": [
+        {
+          "name": "Reserve1",
+          "type": "static",
+          "value": [
+            0,
+            0
+          ],
+          "range": "0x00-0x01"
+        },
+        {
+          "name": "SupportBits",
+          "type": "static",
+          "value": [
+            7,
+            255,
+            240,
+            2,
+            128,
+            0
+          ],
+          "range": "0x02-0x07"
+        },
+        {
+          "name": "Reserve2",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x08-0x0C"
+        },
+        {
+          "name": "METER_ODO_DATA",
+          "type": "dynamic",
+          "source": "read_METER_ODO_DATA",
+          "range": "0x0D-0x0F"
+        },
+        {
+          "name": "IG_ON_COUNTER",
+          "type": "dynamic",
+          "source": "read_IG_ON_COUNTER",
+          "range": "0x10-0x12"
+        },
+        {
+          "name": "IG_VOLTAGE",
+          "type": "dynamic",
+          "source": "read_IG_VOLTAGE",
+          "range": "0x13-0x13"
+        },
+        {
+          "name": "FL_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_FL_WHEEL_SPEED",
+          "range": "0x14-0x14"
+        },
+        {
+          "name": "FR_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_FR_WHEEL_SPEED",
+          "range": "0x15-0x15"
+        },
+        {
+          "name": "RL_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_RL_WHEEL_SPEED",
+          "range": "0x16-0x16"
+        },
+        {
+          "name": "RR_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_RR_WHEEL_SPEED",
+          "range": "0x17-0x17"
+        },
+        {
+          "name": "TM_SPEED",
+          "type": "dynamic",
+          "source": "read_TM_SPEED",
+          "range": "0x18-0x18"
+        },
+        {
+          "name": "LATERAL_G",
+          "type": "dynamic",
+          "source": "read_LATERAL_G",
+          "range": "0x19-0x19"
+        },
+        {
+          "name": "LONGITUDINAL_G",
+          "type": "dynamic",
+          "source": "read_LONGITUDINAL_G",
+          "range": "0x1A-0x1A"
+        },
+        {
+          "name": "YAW",
+          "type": "dynamic",
+          "source": "read_YAW",
+          "range": "0x1B-0x1B"
+        },
+        {
+          "name": "Reserve3",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x1C-0x27"
+        },
+        {
+          "name": "STR_ANGLE",
+          "type": "dynamic",
+          "source": "read_STR_ANGLE",
+          "range": "0x28-0x28"
+        },
+        {
+          "name": "SHIFT_POS",
+          "type": "dynamic",
+          "source": "read_SHIFT_POS",
+          "range": "0x29-0x29"
+        },
+        {
+          "name": "Reserve4",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x2A-0x37"
+        }
+      ]
+    },
+    {
+      "id": 41373,
+      "name": "Aiming date and time",
+      "type": "function",
+      "func_name": "get_did_0xA19D",
+      "supported_services": [
+        34,
+        46
+      ],
+      "supported_sessions": [
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all"
+    },
+    {
+      "id": 41362,
+      "name": "Freeze Data of Vehicle Status",
+      "type": "composite",
+      "supported_services": [
+        34
+      ],
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all",
+      "structure": [
+        {
+          "name": "Reserve1",
+          "type": "static",
+          "value": [
+            0,
+            0
+          ],
+          "range": "0x00-0x01"
+        },
+        {
+          "name": "SupportBits",
+          "type": "static",
+          "value": [
+            255,
+            255,
+            240,
+            0,
+            192,
+            0
+          ],
+          "range": "0x02-0x07"
+        },
+        {
+          "name": "SCS_CODE",
+          "type": "dynamic",
+          "source": "read_SCS_CODE",
+          "range": "0x08-0x08"
+        },
+        {
+          "name": "SAE_CODE",
+          "type": "dynamic",
+          "source": "read_SAE_CODE",
+          "range": "0x09-0x0B"
+        },
+        {
+          "name": "DTC_STATUS",
+          "type": "dynamic",
+          "source": "read_DTC_STATUS",
+          "range": "0x0C-0x0C"
+        },
+        {
+          "name": "METER_ODO_DATA",
+          "type": "dynamic",
+          "source": "read_METER_ODO_DATA",
+          "range": "0x0D-0x0F"
+        },
+        {
+          "name": "IG_ON_COUNTER",
+          "type": "dynamic",
+          "source": "read_IG_ON_COUNTER",
+          "range": "0x10-0x12"
+        },
+        {
+          "name": "IG_VOLTAGE",
+          "type": "dynamic",
+          "source": "read_IG_VOLTAGE",
+          "range": "0x13-0x13"
+        },
+        {
+          "name": "FL_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_FL_WHEEL_SPEED",
+          "range": "0x14-0x14"
+        },
+        {
+          "name": "FR_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_FR_WHEEL_SPEED",
+          "range": "0x15-0x15"
+        },
+        {
+          "name": "RL_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_RL_WHEEL_SPEED",
+          "range": "0x16-0x16"
+        },
+        {
+          "name": "RR_WHEEL_SPEED",
+          "type": "dynamic",
+          "source": "read_RR_WHEEL_SPEED",
+          "range": "0x17-0x17"
+        },
+        {
+          "name": "TM_SPEED",
+          "type": "dynamic",
+          "source": "read_TM_SPEED",
+          "range": "0x18-0x18"
+        },
+        {
+          "name": "LATERAL_G",
+          "type": "dynamic",
+          "source": "read_LATERAL_G",
+          "range": "0x19-0x19"
+        },
+        {
+          "name": "LONGITUDINAL_G",
+          "type": "dynamic",
+          "source": "read_LONGITUDINAL_G",
+          "range": "0x1A-0x1A"
+        },
+        {
+          "name": "YAW",
+          "type": "dynamic",
+          "source": "read_YAW",
+          "range": "0x1B-0x1B"
+        },
+        {
+          "name": "Reserve3",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x1C-0x27"
+        },
+        {
+          "name": "STR_ANGLE",
+          "type": "dynamic",
+          "source": "read_STR_ANGLE",
+          "range": "0x28-0x28"
+        },
+        {
+          "name": "SHIFT_POS",
+          "type": "dynamic",
+          "source": "read_SHIFT_POS",
+          "range": "0x29-0x29"
+        },
+        {
+          "name": "Reserve4",
+          "type": "static",
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "range": "0x2A-0x37"
+        }
+      ]
+    },
+    {
+      "id": 58882,
+      "name": "Vehicle Conditions for Repro",
+      "type": "static",
+      "value": [
+        0,
+        0,
+        0
+      ],
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all"
+    }
+  ]
+}

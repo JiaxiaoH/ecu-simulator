@@ -1,27 +1,48 @@
-# sid_0x22.py
+# sid_0x2E.py
 from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
 from .uds_sid import BaseSID
 from did import DIDManager
-SID = 0x22
-class SID_0x22(BaseSID):
+SID = 0x2E
+class SID_0x2E(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            if cls.is_request_message_less_than_3_byte(request):
-                return cls.NegativeResponse(ecu, 0x13)
-            if cls.is_request_message_even(request):
-                return cls.NegativeResponse(ecu, 0x13)      
-            if cls.is_message_longer_than_available(request):
-                 return cls.NegativeResponse(ecu, 0x13)
-            res=[]
-            data=request.data[1:]
-            #dids = []
+            did_value=request.data[1:2]
+            dids = []
             for i in range(0, len(data), 2):  
                 high = data[i]
                 low = data[i + 1]
                 did_value = (high << 8) + low
-                #dids.append(did_value)
+                dids.append(did_value)            
+            if cls.is_request_message_less_than_4_byte(request):
+                return cls.NegativeResponse(ecu, 0x13)
+            if not cls.is_did_session_supported(request):
+                return cls.NegativeResponse(ecu, 0x31)      
+            if not cls.is_did_supported(request):
+                return cls.NegativeResponse(ecu, 0x31)
+            if len(request.data)!=ecu.did.cal_length(request.data):
+                return cls.Negativeresponse(ecu, 0x13)
+            if not cls.is_did_security_supported(ecu, did_value):
+                return cls.NegativeResponse(ecu, 0x33)
+            if not cls.is_did_driving_supported(ecu, did_value):
+                return cls.NegativeResponse(ecu, 0x22)
+            if not cls.is_datarecord_ok(ecu, did_value):
+                return cls.NegativeResponse(ecu, 0x31)
+            if ecu.is_memory_error(ecu):
+                return cls.NegativeResponse(ecu, 0x72)
+
+            do_0x2E()
+            return cls.PositiveResponse(ecu, [request.data[1], request.data[2]])
+
+            res=[]
+            data=request.data[1:]
+            dids = []
+            for i in range(0, len(data), 2):  
+                high = data[i]
+                low = data[i + 1]
+                did_value = (high << 8) + low
+                dids.append(did_value)
                 
                 if not cls.is_did_supported(ecu, did_value):
                     continue
@@ -91,4 +112,4 @@ class SID_0x22(BaseSID):
             #or ecu.dtc in entry.refusal
         )
 
-register_sid(SID, SID_0x22)
+register_sid(SID, SID_0x2E)

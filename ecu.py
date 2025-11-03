@@ -1,12 +1,16 @@
 #ecu.py
+import os
 import threading
 import time
 import can
+import yaml
+from typing import Dict
 import uds.sid
 from uds.sid_registry import get_handler, SID_HANDLERS
 from sessiontypes import SESSIONS
 from security import SecurityType
 from dtc import DTCManager, DTC
+from did import DIDManager, DID
 from uds_utils import handle_request_with_timeout
 import random
 
@@ -22,7 +26,7 @@ class ECU(can.Listener):
         self.stop_event = threading.Event()
         self.allowed_diag_ids = [0x7E0, 0x7E8] 
         self.dtc = DTCManager()
-
+        self.did = DIDManager("did_config.yaml", "did_config.json", "ecu_config.yaml", self)
         self._timer_lock=threading.Lock()
 
         self._DTCStatusAvailabilityMask=0x0E
@@ -250,3 +254,7 @@ class ECU(can.Listener):
         except TypeError as e:
             self.dt_igon = 0.0
             print(f"[ECU]Error: {e}")
+
+    def find_dataRecord(self, did: int) -> list[int]:
+        return self.did.read_did(did)
+    
