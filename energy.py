@@ -13,7 +13,7 @@ class Energy:
         if value == 'POWER_OFF':
             self._voltage=0.0
     @property
-    def Voltage(self):
+    def voltage(self):
         return self._voltage
 
     #@Voltage.setter

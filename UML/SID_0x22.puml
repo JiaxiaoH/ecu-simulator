@@ -30,10 +30,14 @@ if(リクエスト･メッセージ長の検査) then(yes)
             :skip;
         endif
     endwhile
-    :"62 [Supported DID(MSB), Supported DID, DataA, DataB, DataC, DataD]..."を返送;
+    if(一つ以上のDIDがサポートする) then (yes)
+        :"62 [Supported DID(MSB), Supported DID, DataA, DataB, DataC, DataD]..."を返送;
+    else(no)
+        :"7F 22 31"を返送;
+    endif
     stop
 else(no)
-    :"7F 27 13"を返送;
+    :"7F 22 13"を返送;
     stop
 endif
 @enduml

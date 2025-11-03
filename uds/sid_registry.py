@@ -1,5 +1,8 @@
 # sid_registry.py
 SID_HANDLERS = {}
+"""
+callable, Handler function, accept data bytes
+"""
 
 def register_sid(sid, func):
     """
