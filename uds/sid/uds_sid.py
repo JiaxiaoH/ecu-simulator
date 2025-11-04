@@ -13,6 +13,9 @@ class BaseSID:
     def is_request_message_less_than_3_byte(request):
         return len(request.data) < 3  
     @staticmethod
+    def is_request_message_less_than_4_byte(request):
+        return len(request.data) < 4
+    @staticmethod
     def is_request_message_2_byte(request):
         return len(request.data) == 2
     @staticmethod
@@ -30,6 +33,17 @@ class BaseSID:
     @staticmethod
     def is_memory_error(ecu):
          return ecu.is_memory_error
+    @classmethod
+    def is_did_supported(cls, ecu, did):
+        sid=cls.get_sid_name()
+        return ecu.did.is_supported(sid, did)
+    @classmethod
+    def get_sid_name(cls):
+        try:
+            return int(cls.__name__[len("SID_"):], 16)
+        except ValueError as e:
+            print(f"[Error]: invalid SID class name '{cls.__name__}', must be SID_<hex>-{e}")
+            return None
     @classmethod
     def NegativeResponse(cls, ecu, nrc):
         sidrq_str = cls.__name__.replace('SID_', '')
