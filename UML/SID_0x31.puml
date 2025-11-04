@@ -1,0 +1,43 @@
+@startuml SID$31
+title SID$31
+start
+:SID$31を受信した;
+if(リクエスト･メッセージ長さが4バイト以上) then(yes)
+    if(DIDがサポートされる　かつ　DIDが現在のSessionではサポートする) then (yes)
+        if(リクエスト･メッセージの長さ == DIDより算出するメッセージ長) then (yes)
+            if(セキュリティ解除の検査) then (yes)
+                if(車両運転条件の検査) then (yes)
+                    if(dataRecordの値の範囲の検査) then (yes)
+                        if(メモリの異常の検査) then (yes)
+                            :ECU は要求された書き込み処理を実行;
+                            :"6E [DID(MSE), DID]"を返送;
+                            stop
+                        else(no)
+                            :"7F 2E 72"を返送;
+                            stop
+                        endif
+                    else(no)
+                        :"7F 2E 31"を返送;
+                        stop
+                    endif
+                else(no)
+                    :"7F 2E 22"を返送;
+                    stop
+                endif
+            else(no)
+                :"7F 2E 33"を返送;
+                stop
+            endif
+        else(no)
+            :"7F 2E 13"を返送;
+            stop
+        endif
+    else(no)
+        :"7F 2E 31"を返送;
+        stop
+    endif
+else(no)
+    :"7F 2E 13"を返送;
+    stop
+endif
+@enduml

@@ -15,8 +15,8 @@
       ],
       "supported_security_levels": "all",
       "supported_security_0x2E": [
-        "TypeV",
-        "TypeX"
+        5,
+        10
       ],
       "supported_driving": "all",
       "structure": [
@@ -184,6 +184,7 @@
         32,
         0
       ],
+      "length": 8,
       "supported_services": [
         34
       ],
@@ -367,7 +368,7 @@
     {
       "id": 41373,
       "name": "Aiming date and time",
-      "type": "function",
+      "type": "static",
       "func_name": "get_did_0xA19D",
       "supported_services": [
         34,
@@ -377,7 +378,67 @@
         3
       ],
       "supported_security_levels": "all",
-      "supported_driving": "all"
+      "supported_driving": "all",
+      "length": 56,
+      "value": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "category": "specific"
     },
     {
       "id": 41362,
@@ -562,6 +623,10 @@
         0,
         0,
         0
+      ],
+      "length": 3,
+      "supported_services": [
+        34
       ],
       "supported_sessions": [
         1,

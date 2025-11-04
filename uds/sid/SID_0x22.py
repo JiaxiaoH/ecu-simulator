@@ -16,12 +16,10 @@ class SID_0x22(BaseSID):
                  return cls.NegativeResponse(ecu, 0x13)
             res=[]
             data=request.data[1:]
-            #dids = []
             for i in range(0, len(data), 2):  
                 high = data[i]
                 low = data[i + 1]
                 did_value = (high << 8) + low
-                #dids.append(did_value)
                 
                 if not cls.is_did_supported(ecu, did_value):
                     continue
@@ -47,9 +45,9 @@ class SID_0x22(BaseSID):
     def is_message_longer_than_available(request):
         return len(request.data)>13
 
-    @staticmethod
-    def is_did_supported(ecu, did):
-        return ecu.did.is_supported(did)
+    # @staticmethod
+    # def is_did_supported(ecu, did):
+    #     return ecu.did.is_supported(did)
 
     @staticmethod
     def is_did_session_supported(ecu, did):
