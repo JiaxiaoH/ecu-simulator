@@ -1,52 +1,141 @@
 @startuml ECU Simulator
 title ECU Simulator
-
-class Tester {
-    +SID: int
-    +subFunction: int
-    +dataID: int
-    +data: int
+skinparam classAttributeIconSize 0
+class GUI {
+    +bus: BusABC
+    +ecu: ECU
+    +energy: Energy
+    +msg_queue: Queue
+    +running: boolean
+    +run()
+    +stop()
+    +send_message(data: Message)
 }
 
 class ECU {
-    +DiagnosticSession: int
-    +Security: security
-    +Timer: double
-    +processRequest(request: RequestMessage): ResponseMessage
-    +...
+    +bus: BusABC
+    +enerygy: Energy
+    +SID_HANDLER: dict
+    +start_event: Event
+    +stop_event: Event
+    +dtc: DTCManager
+    +did: DIDManager
+    +illegal_access: int
+    +power_on_time: double
+    +dt_igon: double
+    +running: boolean
+    +security: SecurityType
+    +received_request: boolean
+    +moving: boolean
+    +is_memory_error: boolean
+    +session: SESSIONS
+
+    +reset_state()
+    +hard_reset()
+    +run()
+    +start()
+    +stop()
+    +DTCStatusAvailabilityMask()
+    +DTCFormatIdentifier()
+    +dtcstr()
+    +dtc_available_list()
+    +extend_delay()
+    +communication_control()
+    +dtc_setting()
+    +dtc_clear()
+    +find_dataRecord(did: int)->list
 }
 
-class security{
-    + Type4: boolean
-    + Type5: boolean
-    + Type10: boolean
+abstract class SecurityType{
+    + FALSE: int
+    + TYPE_V: int
+    + TYPE_X: int
 }
 
 abstract class Energy{
-    +Voltage: double
+    +voltage: double
     +status: string
 }
-abstract class RequestMessage {
-    +SID: int
-    +subFunction: int
-    +dataID: int
-    +data: int
-}
-abstract class ResponseMessage {
-}
-' 正向响应消息
-class PositiveResponseMessage extends ResponseMessage {
-    +SID: int
-    +subFunction: int
-    +dataID: int
-    +data: int
+
+abstract class DID{
+    +id: int
+    +name: str
+    +category: str
+    +length: int
+    +get_func: Callable
+    +value: bytes
+    +supported_services: list   
+    +supported_sessions: list
+    +supported_security_levels: list
+    +supported_security_0x2E: list
+    +supported_driving: list
+    +refusal: list
 }
 
-' 负向响应消息
-class NegativeResponseMessage extends ResponseMessage {
-    +SID: int
-    +SIDRQ: int
-    +NRC: int
+class DIDManager{
+    +did_config_path: str
+    +ecu_config_path: str
+    +supported_dids: dict
+    +did_sid_table: dict
+    +func_registry: dict
+    +ecu: ECU
+    +write_data_record(did: int, data_record: list)
+    +check_special_did_update(did: int, data_record: list)->boolean
+    +get_data_record_length(did: int)->int
+    +is_supported(did: int)->boolean
+    +read_did(did: int)->list
+    +refresh_cache()
+    +...()->Any
+}
+
+abstract DTC{
+    +high: int
+    +mid: int
+    +low: int
+    +status: int
+    +testFailed: int
+    +testFailedThisMonitoringCycle: int
+    +pendingDTC: int
+    +confirmedDTC: int
+    +testNotCompletedSinceLastClear: int
+    +testFailedSinceLastClear: int
+    +testNotCompletedThisMonitoringCycle: int
+    +warningIndicatorRequested: int
+    +check_dtc_setting(method: Any)
+}
+
+class DTCManager{
+    +clear_dtc()
+    +get_dtcs()->list
+    +dtc_list: list
+    +dtc_setting: boolean
+    +report_number(mask: int)->int
+    +report_dtc(mask: int)->list
+}
+
+abstract class SESSIONS{
+    +DEFAULT_SESSION: int
+    +PROGRAMMING_SESSION: int
+    +EXTENDED_SESSION: int
+    +FOTAINSTALL_SESSION: int
+    +FOTAACTIVE_SESSION: int
+    +FOTAINSTALLACTIVE_SESSION: int
+    +ENGINEERING_SESSION: int 
+}
+
+abstract class BaseSID{
+    +SID_0x10: BaseSID
+    +SID_0x11: BaseSID
+    +SID_0x14: BaseSID
+    +SID_0x19: BaseSID
+    +SID_0x22: BaseSID
+    +SID_0x27: BaseSID
+    +SID_0x28: BaseSID
+    +SID_0x2E: BaseSID
+    +SID_0x3E: BaseSID
+    +SID_0x85: BaseSID    
+    +PositiveResponse(ecu: ECU, data: list)->Message
+    +NegativeResponse(ecu: ECU, data: list)->Message
 }
 
 class PowerInput {
@@ -54,20 +143,25 @@ class PowerInput {
     +status: string
 }
 
-class UnknowInput {
-    +...
-    +...
+abstract class WrappedMessage{
+    +session: SESSIONS
+    +security: SecurityType
+    +msg_id_str()->str
+    +data_str()->str
+    +combined()->str
+    +direction()->str
+    +wrap_from_msg(msg: Message, session: SESSIONS, security: SecurityType)->WrappedMessage
 }
-
-class UnknownOutput {
-    +...
-    +...
-}
-
-UnknowInput --> ECU : unknown
-PowerInput --> ECU : energy
-Tester --> ECU : RequestMessage
-ECU --> UnknownOutput : unknown
-ECU --> Tester : ResponseMessage
+PowerInput --|> Energy
+DID --|> DIDManager
+DTC --|> DTCManager
+WrappedMessage --|> GUI
+GUI --> Energy : use
+ECU --> Energy : use
+GUI --> ECU : Message
+ECU --> GUI : WrappedMessage
+ECU --> DTCManager : DTC, security
+ECU --> DIDManager : DID
+BaseSID --> ECU: BaseSID
 
 @enduml

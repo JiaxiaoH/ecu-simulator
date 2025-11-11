@@ -1,0 +1,74 @@
+rid:
+  - id: 0xA1A3
+    name: "Radar Aiming"
+    supported_services: [0x31]
+    supported_sessions: [0x02, 0x03]
+    supported_security_levels: [5, 10]
+    supported_driving: [0]
+    supported_other_routine: False
+    routine_status: 
+      possible_values: [0x00, 0x7F, 0x80]
+      current_value: 0x00
+    error_status:
+      possible_values: [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
+      current_value: 0x00
+    routine_control_types:
+      0x01:
+        name: "Start Routine"
+        handler_func: do_rid_0xA1A3_0x01
+        must_run_before: [0x02, 0x03]
+        req_length: 5
+        rep_length: 10
+      0x02:
+        name: "Stop Routine"
+        handler_func: do_rid_0xA1A3_0x02
+        req_length: 4
+        rep_length: 10
+      0x03:
+        name: "Request Routine Results"
+        handler_func: do_rid_0xA1A3_0x03
+        req_length: 4
+        rep_length: 10
+    aiming_mode_setting: [0x01, 0x03, 0x05, 0x11, 0x12, 0x13, 0x15, 0x20, 0xA1, 0xA3]
+
+  - id: 0xD111
+    name: "Key Exchange"
+    supported_services: [0x31]
+    supported_sessions: [0x02, 0x03]
+    supported_security_levels: "all"
+    supported_driving: "all"
+    routine_status: 
+      possible_values: [0x00, 0x80]
+      current_value: 0x00
+    error_status:
+      possible_values: [0x00, 0x01, 0x02]
+      current_value: 0x00
+    routine_control_types:
+      0x01:
+        name: "Start Routine"
+        handler_func: do_rid_0xD111
+        req_length: 452
+        rep_length: 70
+
+  - id: 0xFF00
+    name: "Erase Memory"
+    supported_services: [0x31]
+    supported_sessions: [0x02]
+    supported_security_levels: "all"
+    supported_driving: "all"
+    routine_status: 
+      possible_values: []
+      current_value: null
+    error_status:
+      possible_values: []
+      current_value: null
+    routine_control_types:
+      0x01:
+        name: "Start Routine"
+        variants:
+          - req_length: 4
+            handler_func: do_rid_0xFF00_len4
+            rep_length: 4
+          - req_length: 12
+            handler_func: do_rid_0xFF00_len12
+            rep_length: 4
