@@ -3,41 +3,51 @@ title SID$31
 start
 :SID$31を受信した;
 if(リクエスト･メッセージ長さが4バイト以上) then(yes)
-    if(DIDがサポートされる　かつ　DIDが現在のSessionではサポートする) then (yes)
-        if(リクエスト･メッセージの長さ == DIDより算出するメッセージ長) then (yes)
+    if(RIDがサポートされる　かつ　RIDが現在のSessionではサポートする) then (yes)
             if(セキュリティ解除の検査) then (yes)
-                if(車両運転条件の検査) then (yes)
-                    if(dataRecordの値の範囲の検査) then (yes)
-                        if(メモリの異常の検査) then (yes)
-                            :ECU は要求された書き込み処理を実行;
-                            :"6E [DID(MSE), DID]"を返送;
-                            stop
+                if(routineControlTypeがRIDに規定される) then (yes)
+                    if(リクエスト・メッセージ長さの検査) then (yes)
+                        if(routineControlOptionRecordの検査) then (yes)
+                            if(RIDに車両運転条件があり かつ 車両運転条件が実行許可条件を満たす) then (yes)
+                                if(routineControlType の実行順序の検査) then (yes)
+                                    if(メモリ異常なし) then (yes)
+                                        :routineで指定した処理を実行;
+                                        :"71 [RID] [routineControlOptionRecord]"を返送;
+                                        stop
+                                    else(no)
+                                        :"7F 31 72"を返送;
+                                        stop
+                                    endif
+                                else(no)
+                                    :"7F 31 24"を返送;
+                                    stop
+                                endif
+                            else(no)
+                                :"7F 31 22"を返送;
+                                stop
+                            endif
                         else(no)
-                            :"7F 2E 72"を返送;
+                            :"7F 31 31"を返送;
                             stop
                         endif
                     else(no)
-                        :"7F 2E 31"を返送;
+                        :"7F 31 13"を返送;
                         stop
                     endif
                 else(no)
-                    :"7F 2E 22"を返送;
+                    :"7F 31 12"を返送;
                     stop
                 endif
             else(no)
-                :"7F 2E 33"を返送;
+                :"7F 31 33"を返送;
                 stop
             endif
-        else(no)
-            :"7F 2E 13"を返送;
-            stop
-        endif
     else(no)
-        :"7F 2E 31"を返送;
+        :"7F 31 31"を返送;
         stop
     endif
 else(no)
-    :"7F 2E 13"を返送;
+    :"7F 31 13"を返送;
     stop
 endif
 @enduml

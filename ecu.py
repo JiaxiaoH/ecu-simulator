@@ -11,6 +11,7 @@ from sessiontypes import SESSIONS
 from security import SecurityType
 from dtc import DTCManager, DTC
 from did import DIDManager, DID
+from rid import RIDManager, RID
 from uds_utils import handle_request_with_timeout
 import random
 
@@ -27,6 +28,7 @@ class ECU(can.Listener):
         self.allowed_diag_ids = [0x7E0, 0x7E8] 
         self.dtc = DTCManager()
         self.did = DIDManager("did_config.yaml", "did_config.json", "ecu_config.yaml", self)
+        self.rid = RIDManager("rid_config.yaml", "ecu_config.yaml", self)
         self._timer_lock=threading.Lock()
 
         self._DTCStatusAvailabilityMask=0x0E
@@ -153,6 +155,8 @@ class ECU(can.Listener):
         if self._disableRxAndTx:
             if msg.arbitration_id not in self.allowed_diag_ids:
                 return 
+        if not self.running:
+            return
         try:
             if msg.arbitration_id == self.arbitration_id:
                 return
