@@ -1,10 +1,16 @@
 #rid.py
 import os
 import yaml
-import random
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Any
 from sessiontypes import SESSIONS
+from keys import AES_KEY
+from ecdsa import gen_ecdhe_keypair, gen_ssk
+from Crypto.PublicKey import ECC
+from Crypto.Signature import DSS
+from Crypto.Hash import SHA256, HMAC
+from Crypto.Cipher import AES
+import hashlib
 @dataclass
 class RID:
     id: int
@@ -130,10 +136,12 @@ class RIDManager:
             yaml.dump(data, f)
 
     # ========= Public API =========
-    def func(self, rid:int, routine_type:int=0x01) -> list[int]:
+    def func(self, rid:int, routine_type:int=0x01, routine_record: list|None=None) -> list[int]:
         func_name = self.read_rid_func(rid, routine_type)
         if func_name:
             func = getattr(self, func_name)
+        if routine_record is not None:
+            return func(self.read_rid_obj(rid), routine_record)
         return func(self.read_rid_obj(rid))
     
     def is_supported(self,sid: int, rid: int) -> bool:
@@ -232,7 +240,47 @@ class RIDManager:
         # elif ...:
         #     return 0x10
         return []
-    
-    def do_rid_0xD111(self, rid:RID) -> list[int]:
-        #something about 0xD111
-        return [0xFF]*64
+
+    def do_rid_0xD111(self, rid:RID, routine_record:list) -> list[int]:
+        '''
+        some logicts about rid0xD111
+        '''
+        raw_pk=bytes(routine_record[:64])
+        print(f"[ECU] raw_pk= {raw_pk}")
+        x = int.from_bytes(raw_pk[0:32], 'big')
+        y = int.from_bytes(raw_pk[32:64], 'big')
+        # print("[ECU] AUTH PUBKEY USED X =", hex(self.ecu.auth_public_key.pointQ.x))
+        # print("[ECU] AUTH PUBKEY USED Y =", hex(self.ecu.auth_public_key.pointQ.y))
+        kx_pk1 = ECC.construct(curve='P-256', point_x=x, point_y=y)
+        signature=routine_record[64:128]
+        # print("[ECU] SIGNATURE:", ''.join(f"{b:02x}" for b in signature))
+        # print("[ECU] SIGNATURE LENGTH:", len(signature))
+        if self.ecu.auth_public_key is None:
+            rid.routien_status=0x80
+            rid.error_status=0x01
+            return [rid.routine_status, rid.error_status] + [0x00]*64                
+        if verify_signature(self.ecu.auth_public_key, raw_pk, bytes(signature)):
+            print("[ECU] verify ok")
+        else:
+            rid.routine_status=0x80
+            rid.error_status=0x02
+            return [rid.routine_status, rid.error_status] + [0x00]*64
+            
+        kx_sk2, kx_pk2=gen_ecdhe_keypair()
+        self.ecu.ssk=gen_ssk(kx_sk2, kx_pk1)
+        qx = int(kx_pk2.pointQ.x).to_bytes(32, "big")
+        qy = int(kx_pk2.pointQ.y).to_bytes(32, "big")
+        kxpk2_bytes = qx + qy
+
+        print("[ECU] kx_pk2 =", kxpk2_bytes.hex())
+        return [0x00, 0x00]+list(kxpk2_bytes)
+
+def verify_signature(public_key: ECC.EccKey, msg: bytes, sig: bytes) -> bool:
+    h = SHA256.new(msg)
+    verifier = DSS.new(public_key, 'fips-186-3')
+    try:
+        verifier.verify(h, sig)
+        return True
+    except ValueError:
+        return False
+

@@ -69,7 +69,7 @@ class SID_0x27(BaseSID):
                             rn2=cls.random_hex_list(2)
                             kc2=cls.calc_kc2(rn2)
                             ecu.key=kc2
-                            print(f"key="+ ''.join(f"{b:02X}' '" for b in kc2))
+                            print(f"key="+ ''.join(f"{b:02X} " for b in kc2))
                             return cls.PositiveResponse(ecu, [0x67, 0x07] + rn2 + sc2)
                         if type_name==SecurityType.TYPE_X:
                             securitySeed=cls.random_hex_list(16)

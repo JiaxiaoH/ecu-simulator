@@ -6,6 +6,8 @@ import random
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Any
 from sessiontypes import SESSIONS
+from keys import SIGNATUREALGORITHM
+from Crypto.PublicKey import ECC
 @dataclass
 class DID:
     id: int
@@ -39,6 +41,7 @@ class DIDManager:
         self.did_sid_table: Dict[int, Dict[int, DID]] = {}
         self.func_registry: Dict[str, Callable[[int], bytes]] = {
             "get_did_0xA19D": self.get_did_0xA19D,
+            "get_did_0xD110": self.get_did_0xD110,
         }
         self.ecu=ecu
         self.ecu_static_data: Dict[int, bytes] = self._load_ecu_config()
@@ -454,3 +457,18 @@ class DIDManager:
         """
         return [0x00]*56
     
+    def get_did_0xD110(self):
+        pk_dict = SIGNATUREALGORITHM["0x02"]["public_key"]  # dict for ECDSA
+        if pk_dict is None:
+            raise ValueError("Invalid public key format in SIGNATUREALGORITHM['0x02']")
+        pk = ECC.construct(
+            curve=pk_dict["curve"],
+            point_x=pk_dict["point_x"],
+            point_y=pk_dict["point_y"]
+        )
+        # X = int.from_bytes(bytes(pk_list[:32]), "big")
+        # Y = int.from_bytes(bytes(pk_list[32:64]), "big")
+        # print("[ECU] AUTH PUBKEY SET X =", hex(X))
+        # print("[ECU] AUTH PUBKEY SET Y =", hex(Y))
+        self.ecu.auth_public_key = pk
+        return [0x02]+SIGNATUREALGORITHM.get("0x02").get("keyID")

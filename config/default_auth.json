@@ -1,0 +1,26 @@
+{
+  "0x00": {
+    "name": "deAuthenticate",
+    "length": 2,
+    "sessions": [1, 2, 4],
+    "handler": "handle_deauthenticate"
+  },
+  "0x05": {
+    "name": "requestChallengeForAuthentication",
+    "length": 19,
+    "sessions": [2, 4],
+    "handler": "handle_request_challenge"
+  },
+  "0x06": {
+    "name": "verifyProofOfOwnershipUnidirectional",
+    "length": 24,
+    "sessions": [2, 4],
+    "handler": "handle_verify_proof"
+  },
+  "0x08": {
+    "name": "authenticationConfiguration",
+    "length": 2,
+    "sessions": [1, 2, 4],
+    "handler": "handle_auth_config"
+  }
+}

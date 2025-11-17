@@ -32,7 +32,7 @@ class SID_0x31(BaseSID):
             if ecu.is_memory_error:
                 return cls.NegativeResponse(ecu, 0x72)
 
-            res=ecu.rid.func(rid_value, routine_type)
+            res=ecu.rid.func(rid_value, routine_type, routine_record)
             if isinstance(res, list):
                 return cls.PositiveResponse(ecu, [0x71]+[routine_type, high, low]+res)   
             else:

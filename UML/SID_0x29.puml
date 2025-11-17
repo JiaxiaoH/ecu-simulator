@@ -1,0 +1,114 @@
+@startuml SID$29
+title SID$29
+start
+:SID$29を受信;
+if(リクエスト･メッセージ長さが2バイト以上) then (yes)
+    if(authenticationTask==0x00) then (yes)
+        if(sessionの検査) then (yes)
+            if(メッセージ長が2) then (yes)
+                :"69 00 10"を返送;
+                stop
+            else(no)
+                :"7F 29 13"を返送;
+                stop
+            endif
+        else(no)
+            :"7F 29 7E"を返送;
+            stop
+        endif 
+    endif
+    if(authenticationTask==0x05) then(yes)
+        if(sessionの検査) then(yes)
+            if(メッセージ長が19) then(yes)
+                if(認証失敗がない) then(yes)
+                    if(communicationConfiguration==0x00) then(yes)
+                        if(algorithmIndicatorの検査) then(yes)
+                            if(HSMが正常) then(yes)
+                                if(セッション鍵が生成された) then(yes)
+                                    :ECUは暗号化乱数を算出しメモリに保存;
+                                    :"69 05 00 [algorithmIndicator] 00 10 [challengeServer] 00 00"を返送;
+                                    stop
+                                else(no)
+                                        :"7F 29 22"を返送;
+                                        stop
+                                endif
+                            else(no)
+                                :"7F 29 22"を返送;
+                                stop
+                            endif
+                        else(no)
+                            :"7F 29 5C"を返送;
+                            stop
+                        endif
+                    else(no)
+                        :"7F 29 5C"を返送;
+                        stop
+                    endif
+                else(no)
+                    :"7F 29 22"を返送;
+                    stop
+                endif
+            else(no)
+                :"7F 29 13"を返送;
+                stop
+            endif
+        else(no)
+            :"7F 29 7E"を返送;
+            stop
+        endif
+    endif
+    if(authenticationTask==0x06) then(yes)
+        if(DiagnosticSessionの検査) then(yes)
+            if(requestChagllengeForAuthenticationが実施済み) then(yes)
+                if(メッセージ長が40) then(yes)
+                    if(認証失敗がない) then(yes)
+                        if(algorithmIndicatorの検査) then(yes)
+                            if(暗号化乱数と同じ) then(yes)
+                                :"69 06 12 [algorithmIndicator] 00 00"を返送;
+                                stop
+                            else(no)
+                                :"7F 29 58"を返送;
+                                stop
+                            endif
+                        else(no)
+                            :"7F 29 5C"を返送;
+                            stop
+                        endif
+                    else(no)
+                        :"7F 29 22"を返送;
+                        stop
+                    endif
+                else(no)
+                    :"7F 29 13"を返送;
+                    stop
+                endif
+            else(no)
+                :"7F 29 24"を返送;
+                stop
+            endif
+        else(no)
+            :"7F 29 7E"を返送;
+            stop
+        endif
+    endif
+    if(authenticationTask==0x08) then(yes)
+        if(sessionの検査) then(yes)
+            if(メッセージ長が2) then(yes)
+                :"69 08 04"を返送;
+                stop
+            else(no)
+                :"7F 29 13"を返送;
+                stop
+            endif
+        else(no)
+            :"7F 29 7E"を返送;
+            stop
+        endif
+    endif
+    :"7F 29 12"を返送;
+    stop
+else(no)
+    :"7F 29 13"を返送;
+    stop
+endif
+@enduml
