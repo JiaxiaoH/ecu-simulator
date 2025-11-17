@@ -7,6 +7,8 @@ import datetime
 import queue
 from wrapped_message import WrappedMessage
 from dtc import DTCManager, DTC
+from tester_create_key import find_secret_key, gen_signature, gen_rid0x111_req
+from ecdsa import gen_ecdhe_keypair
 class ButtonPush:
     @classmethod
     def battery(cls, name, ecu, energy, button):
@@ -75,7 +77,7 @@ class CanGuiApp(can.Listener):
         self.setup_controls()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(1, self.process_queue)
-
+        self.keyID=(0xFF, 0xFF) #D110
         print(f"bus.channel_info = {self.bus.channel_info}")
 
     def setup_table(self):
@@ -101,6 +103,7 @@ class CanGuiApp(can.Listener):
         self.entry = tk.Entry(self.root, width=50)
         self.entry.place(relx=0.5, rely=0.1, anchor='center')
         self.entry.bind("<Return>", lambda event: ButtonPush.send("Send", self.bus, self.ecu, self.entry, send_callback=self.send_message))
+        self.entry.bind("<Double-Button-1>", self.show_dropdown)
 
         self.send_button = tk.Button(self.root, text="Send", command=lambda: ButtonPush.send("Send", self.bus, self.ecu, self.entry, send_callback=self.send_message))
         self.send_button.place(relx=0.9, rely=0.1, anchor='e')
@@ -140,6 +143,8 @@ class CanGuiApp(can.Listener):
                 wrapped.is_rx = False
             else:
                 wrapped.is_rx = True
+                if list(msg.data[0:3]) ==[0x62, 0xD1, 0x10]:
+                    self.keyID=(msg.data[4], msg.data[5])
             self.disp_msg(wrapped)
     
     def send_message(self, data, arbitration_id=0x7E0):
@@ -163,3 +168,44 @@ class CanGuiApp(can.Listener):
             print("Error stopping ECU:", e)
         self.stop()
         self.root.destroy()
+
+    def show_dropdown(self, event):
+        options = self.get_options()
+        self.hex_line=" ".join(f"{b:02X}" for b in options)
+        if len(options)<16:
+            hex_line_disp = self.hex_line
+        else:
+            hex_line_disp = " ".join(f"{b:02X}" for b in options[0:16])+" ..."
+        if hasattr(self, "dropdown_listbox"):
+            self.dropdown_listbox.destroy()
+        self.dropdown_listbox = tk.Listbox(self.root, height=3)
+        self.dropdown_listbox.insert(tk.END, hex_line_disp)
+        x = self.entry.winfo_rootx() - self.root.winfo_rootx()
+        y = self.entry.winfo_rooty() - self.root.winfo_rooty() + self.entry.winfo_height()
+        self.dropdown_listbox.place(x=x, y=y, width=self.entry.winfo_width())
+        self.dropdown_listbox.bind("<<ListboxSelect>>", self.on_option_selected)
+        self.root.bind("<Button-1>", self.hide_dropdown_outside)
+
+    def on_option_selected(self, event):
+        widget = event.widget
+        if not widget.curselection():
+            return
+
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, self.hex_line)
+
+        self.dropdown_listbox.destroy()
+        self.root.unbind("<Button-1>")
+
+    def hide_dropdown_outside(self, event):
+        widget = event.widget
+        if widget is not self.dropdown_listbox:
+            self.dropdown_listbox.destroy()
+            self.root.unbind("<Button-1>")
+
+    def get_options(self):
+        kx_sk1, kx_pk1=gen_ecdhe_keypair()
+        secret_key=find_secret_key(self.keyID)
+        signature=gen_signature(secret_key, kx_pk1)
+        rid_0x111_req=gen_rid0x111_req(kx_pk1,signature)
+        return rid_0x111_req

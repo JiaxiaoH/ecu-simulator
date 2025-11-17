@@ -73,7 +73,11 @@ class ECU(can.Listener):
         self.illegal_access=0
         self.power_on_time = None
         self.dt_igon = 0.0  
-
+        self.auth=False
+        self.authenticator=None
+        self.auth_public_key=None
+        self.auth_failed=0
+        
     @property
     def session(self):
         return self._session
@@ -83,6 +87,7 @@ class ECU(can.Listener):
         if value!=self._session:
             self._session=value
             self._start_reset_timer(self._delay)
+            self.auth=False
         if (value == SESSIONS.DEFAULT_SESSION) and self._disableRxAndTx:
             self.communication_control(False)
         if (value == SESSIONS.DEFAULT_SESSION):

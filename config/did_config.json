@@ -635,6 +635,23 @@
       ],
       "supported_security_levels": "all",
       "supported_driving": "all"
+    },
+    {
+      "id": 53520,
+      "name": "Signature Algorithm",
+      "type": "function",
+      "func_name": "get_did_0xD110",
+      "length": 6,
+      "supported_services": [
+        34
+      ],
+      "supported_sessions": [
+        1,
+        2,
+        3
+      ],
+      "supported_security_levels": "all",
+      "supported_driving": "all"
     }
   ]
 }

@@ -1,6 +1,8 @@
 #uds_sid.py
 import can
 import datetime
+import secrets
+from Crypto.Cipher import AES
 class BaseSID:
     SUPPORTED_SESSIONS = set()  
     @classmethod
@@ -37,6 +39,19 @@ class BaseSID:
     def is_did_supported(cls, ecu, did):
         sid=cls.get_sid_name()
         return ecu.did.is_supported(sid, did)
+    @staticmethod
+    def random_hex_list(x: int) -> list[int]:
+        random_bytes = secrets.token_bytes(x)
+        return [b for b in random_bytes]
+    @staticmethod
+    def aes128_encrypt(hex_list: list[int], key_list: list[int]) -> list[int]:
+        if len(hex_list) != 16 or len(key_list) != 16:
+            raise ValueError("Error: data is not 16 bytes!")
+        data_bytes = bytes(hex_list)
+        key_bytes = bytes(key_list)
+        cipher = AES.new(key_bytes, AES.MODE_ECB)
+        encrypted = cipher.encrypt(data_bytes)
+        return list(encrypted)
     @classmethod
     def get_sid_name(cls):
         try:

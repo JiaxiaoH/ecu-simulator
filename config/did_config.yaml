@@ -332,3 +332,13 @@ specific:
     supported_sessions: [0x01, 0x02, 0x03]
     supported_security_levels: all
     supported_driving: all
+
+  - id: 0xD110
+    name: "Signature Algorithm"
+    type: function
+    func_name: get_did_0xD110
+    length: 6
+    supported_services: [0x22]
+    supported_sessions: [0x01, 0x02, 0x03]
+    supported_security_levels: all
+    supported_driving: all
