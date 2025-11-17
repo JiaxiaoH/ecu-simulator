@@ -4,13 +4,7 @@ import yaml
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Any
 from sessiontypes import SESSIONS
-from keys import AES_KEY
-from ecdsa import gen_ecdhe_keypair, gen_ssk
-from Crypto.PublicKey import ECC
-from Crypto.Signature import DSS
-from Crypto.Hash import SHA256, HMAC
-from Crypto.Cipher import AES
-import hashlib
+from ecdsa import gen_ecdhe_keypair, gen_ssk, bytes2Ecckey, verify_signature
 @dataclass
 class RID:
     id: int
@@ -246,15 +240,8 @@ class RIDManager:
         some logicts about rid0xD111
         '''
         raw_pk=bytes(routine_record[:64])
-        print(f"[ECU] raw_pk= {raw_pk}")
-        x = int.from_bytes(raw_pk[0:32], 'big')
-        y = int.from_bytes(raw_pk[32:64], 'big')
-        # print("[ECU] AUTH PUBKEY USED X =", hex(self.ecu.auth_public_key.pointQ.x))
-        # print("[ECU] AUTH PUBKEY USED Y =", hex(self.ecu.auth_public_key.pointQ.y))
-        kx_pk1 = ECC.construct(curve='P-256', point_x=x, point_y=y)
+        kx_pk1 = bytes2Ecckey(raw_pk)
         signature=routine_record[64:128]
-        # print("[ECU] SIGNATURE:", ''.join(f"{b:02x}" for b in signature))
-        # print("[ECU] SIGNATURE LENGTH:", len(signature))
         if self.ecu.auth_public_key is None:
             rid.routien_status=0x80
             rid.error_status=0x01
@@ -275,12 +262,4 @@ class RIDManager:
         print("[ECU] kx_pk2 =", kxpk2_bytes.hex())
         return [0x00, 0x00]+list(kxpk2_bytes)
 
-def verify_signature(public_key: ECC.EccKey, msg: bytes, sig: bytes) -> bool:
-    h = SHA256.new(msg)
-    verifier = DSS.new(public_key, 'fips-186-3')
-    try:
-        verifier.verify(h, sig)
-        return True
-    except ValueError:
-        return False
 

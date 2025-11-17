@@ -1,6 +1,7 @@
 import can
 import datetime
-
+from sessiontypes import SESSION_NAME_MAP
+from security import SECURITY_NAME_MAP
 class WrappedMessage(can.Message):
     def __init__(self, *, session=None, security=None, **kwargs):
         super().__init__(**kwargs)
@@ -25,6 +26,14 @@ class WrappedMessage(can.Message):
             return f"Tx"
         else:
             return f"Rx"
+        
+    @property
+    def session_name(self):
+        return SESSION_NAME_MAP.get(self.session, f"Unknown")
+    
+    @property
+    def security_name(self):
+        return SECURITY_NAME_MAP.get(self.security, f"Unknown")
     
     def __str__(self):
         return (f"{self.timestamp} {self.direction} {self.combined} "

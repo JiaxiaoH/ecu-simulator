@@ -8,7 +8,8 @@ import queue
 from wrapped_message import WrappedMessage
 from dtc import DTCManager, DTC
 from tester_create_key import find_secret_key, gen_signature, gen_rid0x111_req
-from ecdsa import gen_ecdhe_keypair
+from keys import ALGORITHMINDICATOR
+from ecdsa import gen_ecdhe_keypair, gen_ssk, aes128_encrypt, bytes2Ecckey
 class ButtonPush:
     @classmethod
     def battery(cls, name, ecu, energy, button):
@@ -77,7 +78,10 @@ class CanGuiApp(can.Listener):
         self.setup_controls()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(1, self.process_queue)
-        self.keyID=(0xFF, 0xFF) #D110
+        self.keyID=(0xFF, 0xFF) #DID0xD110、tester
+        self.kx_sk1=None #RID0xD111、tester
+        self.kx_pk2=None #RID0xD111、tester
+        self.ssk=None#tester
         print(f"bus.channel_info = {self.bus.channel_info}")
 
     def setup_table(self):
@@ -128,7 +132,7 @@ class CanGuiApp(can.Listener):
     def process_queue(self):
         while not self.msg_queue.empty():
             wrapped_msg = self.msg_queue.get()
-            self.tree.insert("", "end", values=[datetime.datetime.fromtimestamp(wrapped_msg.timestamp), wrapped_msg.direction, wrapped_msg.data_str, wrapped_msg.session, wrapped_msg.security])
+            self.tree.insert("", "end", values=[datetime.datetime.fromtimestamp(wrapped_msg.timestamp), wrapped_msg.direction, wrapped_msg.data_str, wrapped_msg.session_name, wrapped_msg.security_name])
             self.tree.see(self.tree.get_children()[-1])
         self.root.after(100, self.process_queue)  
 
@@ -145,6 +149,13 @@ class CanGuiApp(can.Listener):
                 wrapped.is_rx = True
                 if list(msg.data[0:3]) ==[0x62, 0xD1, 0x10]:
                     self.keyID=(msg.data[4], msg.data[5])
+                if list(msg.data[0:6]) ==[0x71, 0x01, 0xD1, 0x11, 0x00, 0x00]:
+                    raw_pk=(msg.data[6:])
+                    self.kx_pk2 = bytes2Ecckey(raw_pk)
+                    self.ssk=gen_ssk(self.kx_sk1, self.kx_pk2)
+                if list(msg.data[0:3])==[0x69, 0x05, 0x00]:
+                    challengeServer=msg.data[21:37]
+                    self.authenticator=aes128_encrypt(challengeServer, self.ssk)
             self.disp_msg(wrapped)
     
     def send_message(self, data, arbitration_id=0x7E0):
@@ -171,28 +182,37 @@ class CanGuiApp(can.Listener):
 
     def show_dropdown(self, event):
         options = self.get_options()
-        self.hex_line=" ".join(f"{b:02X}" for b in options)
-        if len(options)<16:
-            hex_line_disp = self.hex_line
-        else:
-            hex_line_disp = " ".join(f"{b:02X}" for b in options[0:16])+" ..."
+
         if hasattr(self, "dropdown_listbox"):
             self.dropdown_listbox.destroy()
+
         self.dropdown_listbox = tk.Listbox(self.root, height=3)
-        self.dropdown_listbox.insert(tk.END, hex_line_disp)
+        for opt in options:
+            if not opt:
+                line = ""
+            else:
+                if len(opt) < 16:
+                    line = " ".join(f"{b:02X}" for b in opt)
+                else:
+                    line = " ".join(f"{b:02X}" for b in opt[:16]) + " ..."
+            self.dropdown_listbox.insert(tk.END, line)
+
         x = self.entry.winfo_rootx() - self.root.winfo_rootx()
         y = self.entry.winfo_rooty() - self.root.winfo_rooty() + self.entry.winfo_height()
         self.dropdown_listbox.place(x=x, y=y, width=self.entry.winfo_width())
         self.dropdown_listbox.bind("<<ListboxSelect>>", self.on_option_selected)
         self.root.bind("<Button-1>", self.hide_dropdown_outside)
+        self.dropdown_full_options=options
 
     def on_option_selected(self, event):
         widget = event.widget
         if not widget.curselection():
             return
-
+        index=widget.curselection()[0]
+        full_msg=self.dropdown_full_options[index]
+        self.hexline=" ".join(f"{b:02X}" for b in full_msg)
         self.entry.delete(0, tk.END)
-        self.entry.insert(0, self.hex_line)
+        self.entry.insert(0, self.hexline)
 
         self.dropdown_listbox.destroy()
         self.root.unbind("<Button-1>")
@@ -204,8 +224,17 @@ class CanGuiApp(can.Listener):
             self.root.unbind("<Button-1>")
 
     def get_options(self):
-        kx_sk1, kx_pk1=gen_ecdhe_keypair()
+        return [self.generate_rid0xd111_request(), self.generate_sid0x29_request()]
+    
+    def generate_rid0xd111_request(self):
+        self.kx_sk1, kx_pk1=gen_ecdhe_keypair()
         secret_key=find_secret_key(self.keyID)
         signature=gen_signature(secret_key, kx_pk1)
         rid_0x111_req=gen_rid0x111_req(kx_pk1,signature)
         return rid_0x111_req
+
+    def generate_sid0x29_request(self):
+        if not hasattr(self, "authenticator") or self.authenticator is None:
+            return []
+        proof = self.authenticator
+        return [0x29, 0x06] + ALGORITHMINDICATOR + [0x00, 0x10] + proof + [0x00] * 4
