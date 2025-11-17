@@ -10,3 +10,12 @@ class SESSIONS:
     #def __setattr__(self, key, value):
     #    raise AttributeError("DO NOT CHANGE the VALUES of SESSIONS !")
 
+SESSION_NAME_MAP  = {
+    SESSIONS.DEFAULT_SESSION: "Default",
+    SESSIONS.PROGRAMMING_SESSION: "Programming",
+    SESSIONS.EXTENDED_SESSION: "Extended",
+    SESSIONS.FOTAINSTALL_SESSION: "FOTA Install",
+    SESSIONS.FOTAACTIVE_SESSION: "FOTA Active",
+    SESSIONS.FOTAINSTALLACTIVE_SESSION: "FOTA Install Active",
+    SESSIONS.ENGINEERING_SESSION: "Engineering",
+}

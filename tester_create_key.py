@@ -16,16 +16,13 @@ def gen_signature(secret_key: ECC.EccKey, kx_pk1: ECC.EccKey) -> bytes:
     h=SHA256.new(kx_pk1_bytes_for_hash)
     signer = DSS.new(secret_key, 'fips-186-3')
     signature = signer.sign(h)
-    # print("[Tester] SIGNATURE:", signature.hex())
-    # print("[Tester] SIGNATURE LENGTH:", len(signature))
     print(f"[Tester] kx_pk1: {kx_pk1}")
     return signature
 
 def gen_rid0x111_req(kx_pk1: ECC.EccKey, signature: bytes):
     x = int(kx_pk1.pointQ.x).to_bytes(32, 'big')
     y = int(kx_pk1.pointQ.y).to_bytes(32, 'big')
-    #msglist=[0x31, 0x01, 0xD1, 0x11]+list(kx_pk1)+list(signature) 这一行是kx_pk1是bytes的时候的
-    msglist = [0x31, 0x01, 0xD1, 0x11] + list(x + y + signature) #这一行是kx_pk1换成EccKey的
+    msglist = [0x31, 0x01, 0xD1, 0x11] + list(x + y + signature) 
     if len(msglist)<452:
         msglist.extend([0x00] * (452 - len(msglist)))
     return msglist

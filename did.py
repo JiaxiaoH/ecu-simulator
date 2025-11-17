@@ -466,9 +466,5 @@ class DIDManager:
             point_x=pk_dict["point_x"],
             point_y=pk_dict["point_y"]
         )
-        # X = int.from_bytes(bytes(pk_list[:32]), "big")
-        # Y = int.from_bytes(bytes(pk_list[32:64]), "big")
-        # print("[ECU] AUTH PUBKEY SET X =", hex(X))
-        # print("[ECU] AUTH PUBKEY SET Y =", hex(Y))
         self.ecu.auth_public_key = pk
         return [0x02]+SIGNATUREALGORITHM.get("0x02").get("keyID")

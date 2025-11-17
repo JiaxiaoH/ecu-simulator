@@ -77,7 +77,8 @@ class ECU(can.Listener):
         self.authenticator=None
         self.auth_public_key=None
         self.auth_failed=0
-        
+        self.ssk=None
+
     @property
     def session(self):
         return self._session

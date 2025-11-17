@@ -3,7 +3,7 @@ from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
 from .uds_sid import BaseSID
 from security import SecurityType
-from keys import ALGORITHMINDICATOR, TEST_SSK
+from keys import ALGORITHMINDICATOR
 import json
 from pathlib import Path
 SID = 0x29
@@ -68,11 +68,11 @@ class SID_0x29(BaseSID):
             return 0x5C
         #if ecu.HSM
         #    res=0x22
-        if TEST_SSK is None:
+        if ecu.ssk is None:
             return 0x22
         challengeServer=cls.random_hex_list(16)
         #ecu.authenticator=cls.aes128_encrypt(challengeServer, ecu.sessionkey)
-        ecu.authenticator=cls.aes128_encrypt(challengeServer, TEST_SSK)
+        ecu.authenticator=cls.aes128_encrypt(challengeServer, list(ecu.ssk))
         print(f"Authenticator = "+ ' '.join(f"{b:02X}" for b in ecu.authenticator))
         print(f"Answer = 29 06 "+ ' '.join(f"{b:02X}" for b in ALGORITHMINDICATOR)+ " 00 10 "+''.join(f"{b:02X} " for b in ecu.authenticator)+" 00 00 00 00")
         res=[0x05, 0x00] + ALGORITHMINDICATOR + [0x00, 0x10] + challengeServer + [0x00, 0x00]
