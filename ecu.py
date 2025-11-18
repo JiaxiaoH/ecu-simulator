@@ -237,6 +237,8 @@ class ECU(can.Listener):
                 return handler_cls.handle(req, self)
             else:
                 print(f"[ECU] Unsupported SID: {sid}")
+                data_bytes = bytearray([0x7F, sid, 0x11])
+                return can.Message(arbitration_id=self.arbitration_id,data=data_bytes,is_extended_id=False)
         except Exception as e:
             print(f"[ECU] Error processing message: {e}")
     

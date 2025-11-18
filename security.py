@@ -8,7 +8,7 @@ class SecurityType:
 
 SECURITY_NAME_MAP = {
     0x00: "FALSE",
-    0x04: "TYPE_IV",
+    #0x04: "TYPE_IV",
     0x05: "TYPE_V",
     0x0A: "TYPE_X",
 }

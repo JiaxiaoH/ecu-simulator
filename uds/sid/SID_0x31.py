@@ -1,8 +1,6 @@
 # sid_0x31.py
 from ..sid_registry import register_sid
-from sessiontypes import SESSIONS 
 from .uds_sid import BaseSID
-from did import DIDManager
 SID = 0x31
 class SID_0x31(BaseSID):
     @classmethod    

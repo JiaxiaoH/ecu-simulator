@@ -2,7 +2,6 @@
 from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
 from .uds_sid import BaseSID
-from security import SecurityType
 from keys import ALGORITHMINDICATOR
 import json
 from pathlib import Path
@@ -71,8 +70,8 @@ class SID_0x29(BaseSID):
         if ecu.ssk is None:
             return 0x22
         challengeServer=cls.random_hex_list(16)
-        #ecu.authenticator=cls.aes128_encrypt(challengeServer, ecu.sessionkey)
         ecu.authenticator=cls.aes128_encrypt(challengeServer, list(ecu.ssk))
+        ecu.ssk=None
         print(f"Authenticator = "+ ' '.join(f"{b:02X}" for b in ecu.authenticator))
         print(f"Answer = 29 06 "+ ' '.join(f"{b:02X}" for b in ALGORITHMINDICATOR)+ " 00 10 "+''.join(f"{b:02X} " for b in ecu.authenticator)+" 00 00 00 00")
         res=[0x05, 0x00] + ALGORITHMINDICATOR + [0x00, 0x10] + challengeServer + [0x00, 0x00]
@@ -106,17 +105,12 @@ class SID_0x29(BaseSID):
             return 0x13
         return [0x08, 0x04]
 
-#load_auth_tasks_from_json(str(CONFIG_PATH))
-
 def load_auth_tasks_from_json(config_path: str):
     """load from json files"""
     with open(config_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     sid_cls = SID_0x29 
     for sub_func_hex, cfg in data.items():
-        # sub_func = int(sub_func_hex, 16)
-        # module_name, func_name = cfg["handler"].rsplit(".", 1)
-        # handler = getattr(importlib.import_module(module_name), func_name)
         sub_func = int(sub_func_hex, 16)
         func_name = cfg["handler"]
         handler = getattr(sid_cls, func_name)
