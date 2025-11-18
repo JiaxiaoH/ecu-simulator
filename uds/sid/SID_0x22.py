@@ -1,8 +1,6 @@
 # sid_0x22.py
 from ..sid_registry import register_sid
-from sessiontypes import SESSIONS 
 from .uds_sid import BaseSID
-from did import DIDManager
 SID = 0x22
 class SID_0x22(BaseSID):
     @classmethod    
