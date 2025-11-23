@@ -80,6 +80,11 @@ class CanGuiApp(can.Listener):
         self.root.geometry("640x480")
         self.msg_queue=queue.Queue()
         self.running=True
+        self.current_arbitration_id = 0x18DABAF1
+        self.address_list = [
+            0x18DABAF1,  # physical address
+            0x18DBBAF1,  # functional address
+        ]
         self.setup_table()
         self.setup_controls()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -111,7 +116,7 @@ class CanGuiApp(can.Listener):
 
     def setup_controls(self):
         self.entry = tk.Entry(self.root, width=50)
-        self.entry.place(relx=0.5, rely=0.1, anchor='center')
+        self.entry.place(relx=0.6, rely=0.1, anchor='center')
         self.entry.bind("<Return>", lambda event: ButtonPush.send("Send", self.bus, self.ecu, self.entry, send_callback=self.send_message))
         self.entry.bind("<Double-Button-1>", self.show_dropdown)
 
@@ -166,6 +171,73 @@ class CanGuiApp(can.Listener):
         self.power_led_circle = self.power_led.create_oval(2, 2, 18, 18, fill="grey")
         self.power_led.grid(row=0, column=1, padx=5)
 
+        self.addr_button = tk.Button(
+            self.root,
+            text=self.format_addr(self.current_arbitration_id),
+            width=8,
+            command=self.open_address_window
+        )
+        self.addr_button.place(relx=0.25, rely=0.1, anchor="w")
+
+    def format_addr(self, addr: int) -> str:
+        return f"{addr:08X}"
+
+    def open_address_window(self):
+        win = tk.Toplevel(self.root)
+        win.title("Edit Arbitration IDs")
+        win.geometry("380x500")
+        win.resizable(False, False)
+
+        # ===== show the list of addresses =====
+        tk.Label(win, text="Arbitration ID List (Hex):").pack(pady=5)
+        listbox = tk.Listbox(win, height=10, width=20)
+        listbox.pack()
+        def refresh_list():
+            listbox.delete(0, tk.END)
+            for addr in self.address_list:
+                listbox.insert(tk.END, f"{addr:08X}")
+        refresh_list()
+        tk.Label(win, text="Add new ID (Hex):").pack(pady=5)
+        entry_add = tk.Entry(win)
+        entry_add.pack()
+        def add_id():
+            txt = entry_add.get().strip()
+            try:
+                new_id = int(txt, 16)
+            except:
+                entry_add.delete(0, tk.END)
+                entry_add.insert(0, "Invalid Hex!")
+                return
+            if new_id not in self.address_list:
+                self.address_list.append(new_id)
+                refresh_list()
+            entry_add.delete(0, tk.END)
+        tk.Button(win, text="Add", width=10, command=add_id).pack(pady=2)
+
+        def delete_selected():
+            sel = listbox.curselection()
+            if not sel:
+                return
+            idx = sel[0]
+            val = self.address_list[idx]
+            if val == self.current_arbitration_id:
+                return
+            self.address_list.remove(val)
+            refresh_list()
+
+        tk.Button(win, text="Delete Selected", width=14, command=delete_selected).pack(pady=2)
+
+        def set_current():
+            sel = listbox.curselection()
+            if not sel:
+                return
+            idx = sel[0]
+            self.current_arbitration_id = self.address_list[idx]
+            self.addr_button.config(text=self.format_addr(self.current_arbitration_id))
+            win.destroy()
+        tk.Button(win, text="Set as Current", width=14, command=set_current).pack(pady=10)
+
+
     def run(self):
         self.root.mainloop()
 
@@ -188,7 +260,7 @@ class CanGuiApp(can.Listener):
                 session=self.ecu.session,
                 security=self.ecu.security
             )
-            if msg.arbitration_id==0x7E0:
+            if msg.arbitration_id in self.address_list:
                 wrapped.is_rx = False
             else:
                 wrapped.is_rx = True
@@ -204,8 +276,10 @@ class CanGuiApp(can.Listener):
                     self.ssk=None
             self.disp_msg(wrapped)
     
-    def send_message(self, data, arbitration_id=0x7E0):
-        msg = can.Message(datetime.datetime.now().timestamp(), arbitration_id=arbitration_id, data=data, is_extended_id=False, is_rx=False)
+    def send_message(self, data, arbitration_id=None):
+        if arbitration_id is None:
+            arbitration_id=self.current_arbitration_id
+        msg = can.Message(datetime.datetime.now().timestamp(), arbitration_id=arbitration_id, data=data, is_extended_id=True, is_rx=False)
         msg.is_rx=False
         try:
             self.bus.send(msg)

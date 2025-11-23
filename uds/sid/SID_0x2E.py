@@ -6,8 +6,7 @@ class SID_0x2E(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            
-            if cls.is_request_message_less_than_4_byte(request):
+            if cls.check_length(request, min_length=4) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             high = request.data[1]
             low = request.data[2]

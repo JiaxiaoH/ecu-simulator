@@ -24,7 +24,7 @@ class SID_0x29(BaseSID):
     def handle(cls, request, ecu):
         ensure_tasks_loaded()
         try: 
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             task=authentication_tasks.get(request.data[1])
             try:

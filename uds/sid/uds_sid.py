@@ -1,32 +1,40 @@
 #uds_sid.py
 import can
 import datetime
-import secrets
-from Crypto.Cipher import AES
+from uds.utils.crypto import (
+    random_hex_list as _crypto_random_hex_list,
+    aes128_encrypt_hex_list as _crypto_aes128_encrypt_hex_list,
+)
 class BaseSID:
     SUPPORTED_SESSIONS = set()  
+    # @classmethod
+    # def sid(cls):
+    #     if not hasattr(cls, "_sid_cache"):
+    #         cls._sid_cache = int(cls.__name__[4:], 16)
+    #     return cls._sid_cache
+    @staticmethod
+    def check_length(request, min_length:int=None, max_length:int=None, expected_length:int=None) -> bool:
+        '''
+        Check if the request message length is valid.
+        request: can.Message
+        min_length: minimum valid length 
+        max_length: maximum valid length 
+        expected_length: exact valid length
+        Returns: True if valid, False otherwise.
+        '''
+        length = len(request.data)
+        if expected_length is not None:
+            return length == expected_length
+        if min_length is not None and length < min_length:
+            return False
+        if max_length is not None and length > max_length:
+            return False
+        return True
+    
     @classmethod
     def is_session_supported(cls, session):
         return session in cls.SUPPORTED_SESSIONS
     @staticmethod
-    def is_request_message_less_than_2_byte(request):
-        return len(request.data) < 2  
-    @staticmethod
-    def is_request_message_less_than_3_byte(request):
-        return len(request.data) < 3  
-    @staticmethod
-    def is_request_message_less_than_4_byte(request):
-        return len(request.data) < 4
-    @staticmethod
-    def is_request_message_2_byte(request):
-        return len(request.data) == 2
-    @staticmethod
-    def is_request_message_3_byte(request):
-        return len(request.data) == 3
-    @staticmethod
-    def is_request_message_4_byte(request):
-        return len(request.data) == 4
-    staticmethod
     def is_request_message_even(request):
         return len(request.data) % 2 == 0
     @staticmethod
@@ -41,17 +49,10 @@ class BaseSID:
         return ecu.did.is_supported(sid, did)
     @staticmethod
     def random_hex_list(x: int) -> list[int]:
-        random_bytes = secrets.token_bytes(x)
-        return [b for b in random_bytes]
+        return _crypto_random_hex_list(x)
     @staticmethod
     def aes128_encrypt(hex_list: list[int], key_list: list[int]) -> list[int]:
-        if len(hex_list) != 16 or len(key_list) != 16:
-            raise ValueError("Error: data is not 16 bytes!")
-        data_bytes = bytes(hex_list)
-        key_bytes = bytes(key_list)
-        cipher = AES.new(key_bytes, AES.MODE_ECB)
-        encrypted = cipher.encrypt(data_bytes)
-        return list(encrypted)
+        return _crypto_aes128_encrypt_hex_list(hex_list, key_list)
     @classmethod
     def get_sid_name(cls):
         try:
@@ -72,8 +73,41 @@ class BaseSID:
     @staticmethod
     def PositiveResponse(ecu, data):
         return can.Message(
-            timestamp=datetime.datetime.now().timestamp(),
+            #timestamp=datetime.datetime.now().timestamp(),
             arbitration_id=ecu.arbitration_id,
             data=data,
             is_extended_id=False
         )
+    
+    @classmethod
+    def handle_functional(cls, request:can.Message, ecu) -> can.Message|None:
+        response = cls.handle(request, ecu)  
+        return cls.filter_functional_response(response)
+    
+    @classmethod
+    def filter_functional_response(cls, response:can.Message) -> can.Message|None:
+        return None if (response.data[0]==0x7F and response.data[2] in [0x11, 0x12, 0x31, 0x7E, 0x7F]) else response
+    
+    @classmethod
+    def filter_SPRMIB_response(cls, response, ecu) -> can.Message|None:
+        if response is None:
+            return None
+        key=(response.data[0]-0x40, response.data[1])
+        return None if (response.data[0]!=0x7F and ecu.SPRMIB.get(key)) else response
+    
+    @classmethod
+    def set_SPRMIB_response(cls, req, ecu) ->None:
+        key = (req.data[0], req.data[1]) if req.data[1]<0x80 else (req.data[0], req.data[1]-0x80)
+        flag = ecu.SPRMIB.get(key)
+        if flag is None:
+            ecu.SPRMIB[key]=True
+        else:
+            ecu.SPRMIB[key]=not flag
+        return None
+
+    # @classmethod
+    # def SPRMIB_response(cls, msg: can.Message, ecu):
+    #     if msg.data[1]>0x7F:
+    #         cls.set_SPRMIB_response(msg, ecu)
+    #     else:
+    #         cls.filter_SPRMIB_response(msg, ecu)

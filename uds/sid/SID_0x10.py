@@ -33,11 +33,11 @@ class SID_0x10(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             subfunc=request.data[1]
             if not cls.is_subfuncs_supported(subfunc):
-                return cls.NegativeResponse(0x12)
+                return cls.NegativeResponse(ecu, 0x12)
             # handler_map = {
             #     SESSIONS.DEFAULT_SESSION: cls.handle_default,
             #     SESSIONS.PROGRAMMING_SESSION: cls.handle_programming,
@@ -58,7 +58,7 @@ class SID_0x10(BaseSID):
     def handle_default(cls, request, ecu):
         if not cls.is_session_supported(ecu.session, request):
             return cls.NegativeResponse(ecu, 0x7E)
-        if not cls.is_request_message_2_byte(request):
+        if cls.check_length(request, expected_length=2) is False:
             return cls.NegativeResponse(ecu, 0x13)
         ecu.session=SESSIONS.DEFAULT_SESSION
         return cls.PositiveResponse(ecu, [0x50, SESSIONS.DEFAULT_SESSION, 0x00, 0x32, 0x01, 0xF4])
@@ -71,7 +71,7 @@ class SID_0x10(BaseSID):
             return cls.NegativeResponse(ecu, 0x33)
         if ecu.auth==False or ecu.auth_failed>0:
             return cls.NegativeResponse(ecu, 0x34)
-        if not cls.is_request_message_2_byte(request):
+        if cls.check_length(request, expected_length=2) is False:
             return cls.NegativeResponse(ecu, 0x13)
         ecu.session=SESSIONS.PROGRAMMING_SESSION
         return cls.PositiveResponse(ecu, [0x50, SESSIONS.PROGRAMMING_SESSION, 0x00, 0x32, 0x01, 0xF4])
@@ -80,7 +80,7 @@ class SID_0x10(BaseSID):
     def handle_extended(cls, request, ecu):
         if not cls.is_session_supported(ecu.session, request):
             return cls.NegativeResponse(ecu, 0x7E)
-        if not cls.is_request_message_2_byte(request):
+        if cls.check_length(request, expected_length=2) is False:
             return cls.NegativeResponse(ecu, 0x13)
         ecu.session=SESSIONS.EXTENDED_SESSION
         return cls.PositiveResponse(ecu, [0x50, SESSIONS.EXTENDED_SESSION, 0x00, 0x32, 0x01, 0xF4])
@@ -89,7 +89,7 @@ class SID_0x10(BaseSID):
     def handle_engineering(cls, request, ecu):
         if not cls.is_session_supported(ecu.session, request):
             return cls.NegativeResponse(ecu, 0x7E)
-        if not cls.is_request_message_2_byte(request):
+        if cls.check_length(request, expected_length=2) is False:
             return cls.NegativeResponse(ecu, 0x13)
         if (ecu.security == SecurityType.FALSE) and request.data[1]==SESSIONS.ENGINEERING_SESSION:
             return cls.NegativeResponse(ecu, 0x33)

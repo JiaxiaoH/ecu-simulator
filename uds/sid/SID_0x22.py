@@ -6,11 +6,11 @@ class SID_0x22(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            if cls.is_request_message_less_than_3_byte(request):
+            if cls.check_length(request, min_length=3) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if cls.is_request_message_even(request):
                 return cls.NegativeResponse(ecu, 0x13)      
-            if cls.is_message_longer_than_available(request):
+            if cls.check_length(request, max_length=13) is False:
                  return cls.NegativeResponse(ecu, 0x13)
             res=[]
             data=request.data[1:]
@@ -38,14 +38,6 @@ class SID_0x22(BaseSID):
                     print(f"[ERROR] SID_0X22 error: {e}")
                     import traceback
                     traceback.print_exc()
-            
-    @staticmethod
-    def is_message_longer_than_available(request):
-        return len(request.data)>13
-
-    # @staticmethod
-    # def is_did_supported(ecu, did):
-    #     return ecu.did.is_supported(did)
 
     @staticmethod
     def is_did_session_supported(ecu, did):

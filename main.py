@@ -10,6 +10,5 @@ def main():
     notifier = can.Notifier(bus, [ecu, app])
     app.run()
     notifier.stop()
-
 if __name__ == "__main__":
     main()

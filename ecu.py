@@ -1,12 +1,11 @@
 #ecu.py
 import os
+import uds.sid
 import threading
 import time
 import can
-import yaml
-from typing import Dict
-import uds.sid
-from uds.sid_registry import get_handler, SID_HANDLERS
+from uds.dispatcher import dispatch_request
+#from uds.sid_registry import get_handler, SID_HANDLERS
 from sessiontypes import SESSIONS
 from security import SecurityType
 from dtc import DTCManager, DTC
@@ -17,20 +16,19 @@ import random
 
 class ECU(can.Listener):
     def __init__(self, energy, bus: can.Bus, frequency_hz=60):
-        self.SID_HANDLERS=SID_HANDLERS
+        #self.SID_HANDLERS=SID_HANDLERS
         self.energy = energy
-        self.arbitration_id = 0x7E8
+        self.arbitration_id = 0x18DAF1BA#0x7E8
         self.bus = bus
         self.frequency = frequency_hz
         self.period = 1.0 / frequency_hz
         self.start_event = threading.Event()
         self.stop_event = threading.Event()
-        self.allowed_diag_ids = [0x7E0, 0x7E8] 
+        self.allowed_diag_ids = [0x18DABAF1, 0x18DBBAF1, 0x18DAF1BA]#[0x7E0, 0x7E8] 
         self.dtc = DTCManager()
         self.did = DIDManager("did_config.yaml", "did_config.json", "ecu_config.yaml", self)
         self.rid = RIDManager("rid_config.yaml", "ecu_config.yaml", self)
         self._timer_lock=threading.Lock()
-
         self._DTCStatusAvailabilityMask=0x0E
         self._DTCFormatIdentifier=0x00
         self._dtcstr=["B2B10-A3", "U0146-00", "C0037-62"]
@@ -43,6 +41,7 @@ class ECU(can.Listener):
         self._reset_timer = None
         self._start_time = None
         self.reset_state()
+        self.SPRMIB={}
 
     @property
     def DTCStatusAvailabilityMask(self):
@@ -68,7 +67,7 @@ class ECU(can.Listener):
         self.received_request = False
         self.moving = False
         self.is_memory_error = False
-        self._delay = 3
+        self._delay = 5
         self._disableRxAndTx = False
         self.illegal_access=0
         self.power_on_time = None
@@ -142,6 +141,7 @@ class ECU(can.Listener):
             self.power_on_time = time.time()
             self.dt_igon = 0.0
             self.start_thread() 
+            self.SPRMIB={}
         elif status == "POWER_OFF":
             print("[ECU] Received POWER_OFF signal, stopping ECU...")
             self.running = False
@@ -182,6 +182,8 @@ class ECU(can.Listener):
             if response is not None:
                 self.bus.send(response)
                 self.received_request=False
+            else:
+                print("No response")
         except Exception as e:        
             print(f"[ECU] Error processing message: {e}")
         
@@ -215,7 +217,7 @@ class ECU(can.Listener):
         print("[ECU] P2 timeout!")
         try:
             data_bytes=bytearray([0x7F, req.data[0], 0x78])
-            msg = can.Message(arbitration_id=self.arbitration_id, data=data_bytes, is_extended_id=False)
+            msg = can.Message(arbitration_id=self.arbitration_id, data=data_bytes, is_extended_id=True)
             self.bus.send(msg)
             print(f"[ECU] Sent NegativeResponse (timeout): {msg}")
         except can.CanError as e:
@@ -231,14 +233,7 @@ class ECU(can.Listener):
 
     def handle_request(self, req):
         try:
-            sid = req.data[0]
-            handler_cls = self.SID_HANDLERS.get(sid)
-            if handler_cls:
-                return handler_cls.handle(req, self)
-            else:
-                print(f"[ECU] Unsupported SID: {sid}")
-                data_bytes = bytearray([0x7F, sid, 0x11])
-                return can.Message(arbitration_id=self.arbitration_id,data=data_bytes,is_extended_id=False)
+            return dispatch_request(req, self)
         except Exception as e:
             print(f"[ECU] Error processing message: {e}")
     

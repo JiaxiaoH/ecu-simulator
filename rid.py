@@ -243,22 +243,24 @@ class RIDManager:
         kx_pk1 = bytes2Ecckey(raw_pk)
         signature=routine_record[64:128]
         if self.ecu.auth_public_key is None:
-            rid.routien_status=0x80
-            rid.error_status=0x01
-            return [rid.routine_status, rid.error_status] + [0x00]*64                
+            rid.routine_status["current_value"]=0x80
+            #rid.error_status=0x01
+            rid.error_status=0x02
+            return [rid.routine_status.get("current_value"), rid.error_status] + [0x00]*64                
         if verify_signature(self.ecu.auth_public_key, raw_pk, bytes(signature)):
             print("[ECU] verify ok")
         else:
-            rid.routine_status=0x80
+            rid.routine_status["current_value"]=0x80
             rid.error_status=0x02
-            return [rid.routine_status, rid.error_status] + [0x00]*64
+            return [rid.routine_status.get("current_value"), rid.error_status] + [0x00]*64
             
         kx_sk2, kx_pk2=gen_ecdhe_keypair()
         self.ecu.ssk=gen_ssk(kx_sk2, kx_pk1)
         qx = int(kx_pk2.pointQ.x).to_bytes(32, "big")
         qy = int(kx_pk2.pointQ.y).to_bytes(32, "big")
         kxpk2_bytes = qx + qy
-
+        rid.routine_status["current_value"]=0x00
+        rid.error_status=0x00
         print("[ECU] kx_pk2 =", kxpk2_bytes.hex())
         return [0x00, 0x00]+list(kxpk2_bytes)
 
