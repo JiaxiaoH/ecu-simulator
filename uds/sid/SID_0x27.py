@@ -4,8 +4,8 @@ from ..sid_registry import register_sid
 from sessiontypes import SESSIONS 
 from .uds_sid import BaseSID
 from security import SecurityType
-import secrets
-from Crypto.Cipher import AES
+# import secrets
+# from Crypto.Cipher import AES
 from keys import AES_KEY
 SID = 0x27
 class SID_0x27(BaseSID):
@@ -30,7 +30,6 @@ class SID_0x27(BaseSID):
             #SecurityType.TYPE_IV: [0x42, 5, 0]
             }
     }
-
     @classmethod    
     def handle(cls, request, ecu):
         try:
@@ -38,7 +37,7 @@ class SID_0x27(BaseSID):
             securityCode=[0x00, 0x00]
             if not cls.is_session_supported(ecu.session):
                 return cls.NegativeResponse(ecu, 0x7F) 
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             
             securityType=SID_0x27.get_security_access_type(request)
@@ -47,7 +46,7 @@ class SID_0x27(BaseSID):
             else:
                 category, type_name=securityType
                 if category == "requestSeed":
-                    if not cls.is_request_message_2_byte(request):
+                    if cls.check_length(request, expected_length=2) is False:
                         return cls.NegativeResponse(ecu, 0x13)
                     if ecu.illegal_access>0:
                         return cls.NegativeResponse(ecu, 0x37)
@@ -80,11 +79,11 @@ class SID_0x27(BaseSID):
                 elif category == "sendKey":
                     if ecu.security != SecurityType.FALSE:
                         # if type_name==SecurityType.Type_IV:
-                        #     return cls.PositiveResponse(ecu, [0x67, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00])
+                        #     return cls.PositiveResponse(ecu, [0x67, 0x42])
                         if type_name == SecurityType.TYPE_V:
-                            return cls.PositiveResponse(ecu, [0x67, 0x08, 0x00, 0x00, 0x00, 0x00])
+                            return cls.PositiveResponse(ecu, [0x67, 0x08])
                         if type_name == SecurityType.TYPE_X:
-                            return cls.PositiveResponse(ecu, [0x67, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])                              
+                            return cls.PositiveResponse(ecu, [0x67, 0x32])                              
                     else:
                         if ecu.key is None:
                             return cls.NegativeResponse(ecu, 0x24)
@@ -95,13 +94,13 @@ class SID_0x27(BaseSID):
                             ecu.illegal_access+=1
                             return cls.NegativeResponse(ecu, 0x36)
                         # if type_name == SecurityType.TYPE_IV:
-                        #   return cls.PositiveResponse(ecu, [0x67, 0x08]+kc2+sc2)
+                        #   return cls.PositiveResponse(ecu, [0x67, 0x08])
                         if type_name == SecurityType.TYPE_V:
                             ecu.security=SecurityType.TYPE_V
-                            return cls.PositiveResponse(ecu, [0x67, 0x08] + ecu.key + sc2)
+                            return cls.PositiveResponse(ecu, [0x67, 0x08] )
                         if type_name == SecurityType.TYPE_X:
                             ecu.security=SecurityType.TYPE_X
-                            return cls.PositiveResponse(ecu, [0x67, 0x32] + ecu.key)                    
+                            return cls.PositiveResponse(ecu, [0x67, 0x32] )                    
                 
         except Exception as e:
                     print(f"[ERROR] SID_0X27 error: {e}")
@@ -120,10 +119,10 @@ class SID_0x27(BaseSID):
     def is_communicationType_supported(request):
         return request.data[2] == 0x03
     
-    @staticmethod
-    def random_hex_list(x: int) -> list[int]:
-        random_bytes = secrets.token_bytes(x)
-        return [b for b in random_bytes]
+    # @staticmethod
+    # def random_hex_list(x: int) -> list[int]:
+    #     random_bytes = secrets.token_bytes(x)
+    #     return [b for b in random_bytes]
     
     @staticmethod
     def calc_kc2(rn2: list[int]) -> list[int]:
@@ -132,15 +131,5 @@ class SID_0x27(BaseSID):
             raise ValueError("RN2 must be length 2")
         kc2 = [b ^ m for b, m in zip(rn2, xor_mask)]
         return kc2
-    
-    @staticmethod
-    def aes128_encrypt(hex_list: list[int], key_list: list[int]) -> list[int]:
-        if len(hex_list) != 16 or len(key_list) != 16:
-            raise ValueError("Error: data is not 16 bytes!")
-        data_bytes = bytes(hex_list)
-        key_bytes = bytes(key_list)
-        cipher = AES.new(key_bytes, AES.MODE_ECB)
-        encrypted = cipher.encrypt(data_bytes)
-        return list(encrypted)
     
 register_sid(SID, SID_0x27)

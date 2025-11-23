@@ -18,11 +18,11 @@ class SID_0x85(BaseSID):
         try:
             if not cls.is_session_supported(ecu.session):
                 return cls.NegativeResponse(ecu, 0x7F)
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if not cls.is_DTCSettingType_supported(request):
                  return cls.NegativeResponse(ecu, 0x12)        
-            if not cls.is_request_message_2_byte(request):
+            if cls.check_length(request, expected_length=2) is False:
                  return cls.NegativeResponse(ecu, 0x13)
             
             ecu.dtc_setting()

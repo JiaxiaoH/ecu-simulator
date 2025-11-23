@@ -23,11 +23,11 @@ class SID_0x19(BaseSID):
         try:
             if not cls.is_session_supported(ecu.session):
                 return cls.NegativeResponse(ecu, 0x7F) 
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if not cls.is_subfuncs_supported(request):
                  return cls.NegativeResponse(ecu, 0x12)
-            if cls.is_request_message_3_byte(request):
+            if cls.check_length(request, expected_length=3) is False:
                 if request.data[1]==0x01:
                     DTCCount=cls.reportNumberOfDTCByStatusMask(ecu, request)
                     res=[0x59, 0x01, ecu.DTCStatusAvailabilityMask]+DTCCount
@@ -38,7 +38,7 @@ class SID_0x19(BaseSID):
                     return cls.PositiveResponse(ecu, res)
                 else:
                      return cls.NegativeResponse(ecu, 0x13)
-            elif cls.is_request_message_2_byte(request):
+            elif cls.check_length(request, expected_length=2) is False:
                 if request.data[1]==0x0A:#reportSupportedDTC
                     DTCSupported=cls.reportSupportedDTC(ecu)
                     res=[0x59, 0x0A, ecu.DTCStatusAvailabilityMask]+DTCSupported

@@ -7,22 +7,22 @@ SID = 0x11
 class SID_0x11(BaseSID):
     SUPPORTED_SESSIONS={
         SESSIONS.PROGRAMMING_SESSION,
-        SESSIONS.EXTENDED_SESSION,
-        SESSIONS.ENGINEERING_SESSION,
-        SESSIONS.FOTAACTIVE_SESSION,
-        SESSIONS.FOTAINSTALL_SESSION,
-        SESSIONS.FOTAINSTALLACTIVE_SESSION
+        #SESSIONS.EXTENDED_SESSION,
+        #SESSIONS.ENGINEERING_SESSION,
+        #SESSIONS.FOTAACTIVE_SESSION,
+        #SESSIONS.FOTAINSTALL_SESSION,
+        #SESSIONS.FOTAINSTALLACTIVE_SESSION
     }
     @classmethod    
     def handle(cls, request, ecu):
         try:
             if not cls.is_session_supported(ecu.session):
                 return cls.NegativeResponse(ecu, 0x7F)
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if not cls.is_resetType_supported(request):
                 return cls.NegativeResponse(ecu, 0x12)
-            if not cls.is_request_message_2_byte(request):
+            if cls.check_length(request, expected_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if cls.is_car_moving(ecu):
                 return cls.NegativeResponse(ecu, 0x22) 

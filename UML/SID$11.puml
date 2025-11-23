@@ -7,7 +7,7 @@ start
 
       partition checkReq #WhiteSmoke{
 
-        if (DiagnosticSession != defaultSession) then (yes) 
+        if (DiagnosticSession == programmingSession) then (yes) 
             if (len(RequestMessage) >= 2byte) then (yes)
                 if(resetType == 01) then (yes)
                     if(len(RequestMessage) == 2byte) then (yes)

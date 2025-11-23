@@ -18,11 +18,11 @@ class SID_0x28(BaseSID):
         try:
             if not cls.is_session_supported(ecu.session):
                 return cls.NegativeResponse(ecu, 0x7F) 
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if not cls.is_controlType_supported(request):
                 return cls.NegativeResponse(ecu, 0x12)
-            if not cls.is_request_message_3_byte(request):
+            if cls.check_length(request, expected_length=3) is False:
                  return cls.NegativeResponse(ecu, 0x13)        
             if not cls.is_communicationType_supported(request):
                  return cls.NegativeResponse(ecu, 0x31)

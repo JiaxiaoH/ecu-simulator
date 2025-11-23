@@ -16,11 +16,11 @@ class SID_0x3E(BaseSID):
     @classmethod    
     def handle(cls, request, ecu):
         try:
-            if cls.is_request_message_less_than_2_byte(request):
+            if cls.check_length(request, min_length=2) is False:
                 return cls.NegativeResponse(ecu, 0x13)
             if not cls.is_zeroSubFunction_supported(request):
                 return cls.NegativeResponse(ecu, 0x12)
-            if not cls.is_request_message_2_byte(request):
+            if cls.check_length(request, expected_length=2) is False:
                  return cls.NegativeResponse(ecu, 0x13)        
             
             ecu.extend_delay()
