@@ -179,11 +179,6 @@ class ECU(can.Listener):
                 on_timeout=self.on_timeout,
                 on_finish=self.on_finish
             )
-            if response is not None:
-                self.bus.send(response)
-                self.received_request=False
-            else:
-                print("No response")
         except Exception as e:        
             print(f"[ECU] Error processing message: {e}")
         
@@ -230,7 +225,9 @@ class ECU(can.Listener):
                 print(f"[ECU] Sent response: {resp}")
             except can.CanError as e:
                 print(f"[ERROR] CAN send failed")
-
+        else:
+            print("[ECU] No response")
+            
     def handle_request(self, req):
         try:
             return dispatch_request(req, self)

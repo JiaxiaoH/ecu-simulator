@@ -12,3 +12,5 @@ SECURITY_NAME_MAP = {
     0x05: "TYPE_V",
     0x0A: "TYPE_X",
 }
+
+SECURITY_NAME_MAP_REVERSE = {v: k for k, v in SECURITY_NAME_MAP.items()}

@@ -6,7 +6,7 @@ from .uds_sid import BaseSID
 from security import SecurityType
 # import secrets
 # from Crypto.Cipher import AES
-from keys import AES_KEY
+from keys import AES_KEY, XOR_MASK
 SID = 0x27
 class SID_0x27(BaseSID):
     SUPPORTED_SESSIONS={
@@ -103,7 +103,7 @@ class SID_0x27(BaseSID):
                             return cls.PositiveResponse(ecu, [0x67, 0x32] )                    
                 
         except Exception as e:
-                    print(f"[ERROR] SID_0X27 error: {e}")
+                    print(f"[ERROR] SID_0x27 error: {e}")
                     import traceback
                     traceback.print_exc()
     
@@ -119,17 +119,11 @@ class SID_0x27(BaseSID):
     def is_communicationType_supported(request):
         return request.data[2] == 0x03
     
-    # @staticmethod
-    # def random_hex_list(x: int) -> list[int]:
-    #     random_bytes = secrets.token_bytes(x)
-    #     return [b for b in random_bytes]
-    
     @staticmethod
     def calc_kc2(rn2: list[int]) -> list[int]:
-        xor_mask = [0xA0, 0xB0]
         if len(rn2) != 2:
             raise ValueError("RN2 must be length 2")
-        kc2 = [b ^ m for b, m in zip(rn2, xor_mask)]
+        kc2 = [b ^ m for b, m in zip(rn2, XOR_MASK)]
         return kc2
     
 register_sid(SID, SID_0x27)

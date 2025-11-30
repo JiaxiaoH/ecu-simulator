@@ -27,7 +27,7 @@ class SID_0x19(BaseSID):
                 return cls.NegativeResponse(ecu, 0x13)
             if not cls.is_subfuncs_supported(request):
                  return cls.NegativeResponse(ecu, 0x12)
-            if cls.check_length(request, expected_length=3) is False:
+            if cls.check_length(request, expected_length=3) is True:
                 if request.data[1]==0x01:
                     DTCCount=cls.reportNumberOfDTCByStatusMask(ecu, request)
                     res=[0x59, 0x01, ecu.DTCStatusAvailabilityMask]+DTCCount
@@ -38,7 +38,7 @@ class SID_0x19(BaseSID):
                     return cls.PositiveResponse(ecu, res)
                 else:
                      return cls.NegativeResponse(ecu, 0x13)
-            elif cls.check_length(request, expected_length=2) is False:
+            elif cls.check_length(request, expected_length=2) is True:
                 if request.data[1]==0x0A:#reportSupportedDTC
                     DTCSupported=cls.reportSupportedDTC(ecu)
                     res=[0x59, 0x0A, ecu.DTCStatusAvailabilityMask]+DTCSupported
@@ -49,7 +49,7 @@ class SID_0x19(BaseSID):
                  return cls.NegativeResponse(ecu, 0x13)  
             
         except Exception as e:
-                    print(f"[ERROR] SID_0X19 error: {e}")
+                    print(f"[ERROR] SID_0x19 error: {e}")
                     import traceback
                     traceback.print_exc()
             

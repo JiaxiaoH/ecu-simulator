@@ -29,10 +29,6 @@ def derive_key_from_aes(aes_key: bytes, key_id: int):
 
 # ========= generate Kx_Z=========
 def gen_kx_z(kx_sk: ECC.EccKey, kx_pk: ECC.EccKey) ->bytes:
-    # x = int.from_bytes(kx_pk[0:32], 'big')
-    # y = int.from_bytes(kx_pk[32:], 'big')
-    # public = ECC.construct(curve="P-256", point_x=x, point_y=y)
-    #d = int.from_bytes(kx_sk, 'big')
     shared_point = kx_pk.pointQ * int(kx_sk.d)
     return int(shared_point.x).to_bytes(32, 'big')
 

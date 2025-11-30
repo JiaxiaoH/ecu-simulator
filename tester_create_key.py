@@ -19,7 +19,7 @@ def gen_signature(secret_key: ECC.EccKey, kx_pk1: ECC.EccKey) -> bytes:
     print(f"[Tester] kx_pk1: {kx_pk1}")
     return signature
 
-def gen_rid0x111_req(kx_pk1: ECC.EccKey, signature: bytes):
+def gen_rid0x111_req(kx_pk1: ECC.EccKey, signature: bytes) ->list[int]:
     x = int(kx_pk1.pointQ.x).to_bytes(32, 'big')
     y = int(kx_pk1.pointQ.y).to_bytes(32, 'big')
     msglist = [0x31, 0x01, 0xD1, 0x11] + list(x + y + signature) 
