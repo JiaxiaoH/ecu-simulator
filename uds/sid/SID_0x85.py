@@ -30,7 +30,7 @@ class SID_0x85(BaseSID):
             return cls.PositiveResponse(ecu, [0xC5, 0x02])      
             
         except Exception as e:
-                    print(f"[ERROR] SID_0X14 error: {e}")
+                    print(f"[ERROR] SID_0x85 error: {e}")
                     import traceback
                     traceback.print_exc()
             

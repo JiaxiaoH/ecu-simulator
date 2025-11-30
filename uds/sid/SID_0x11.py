@@ -29,7 +29,7 @@ class SID_0x11(BaseSID):
             ecu.hard_reset()
             return cls.PositiveResponse(ecu, [0x51, 0x01])
         except Exception as e:
-                    print(f"[ERROR] SID_0X11 error: {e}")
+                    print(f"[ERROR] SID_0x11 error: {e}")
                     import traceback
                     traceback.print_exc()
     @staticmethod

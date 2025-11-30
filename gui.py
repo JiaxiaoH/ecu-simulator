@@ -6,10 +6,7 @@ from tkinter import ttk
 import datetime
 import queue
 from wrapped_message import WrappedMessage
-from dtc import DTCManager, DTC
-from tester_create_key import find_secret_key, gen_signature, gen_rid0x111_req
-from keys import ALGORITHMINDICATOR
-from ecdsa import gen_ecdhe_keypair, gen_ssk, aes128_encrypt, bytes2Ecckey
+from dtc import DTC
 from PIL import Image, ImageTk 
 class ButtonPush:
     @classmethod
@@ -33,7 +30,7 @@ class ButtonPush:
             ecu.moving=False
             button.config(text='Stop', bg="red", fg="white")
     @classmethod 
-    def send(cls, name, bus, ecu, entry=None, send_callback=None):
+    def send(cls, entry=None, send_callback=None):
         if entry is not None and entry.get().strip() != "":
             try:
                 can_entry= [int(x, 16) for x in entry.get().split()]
@@ -71,16 +68,17 @@ class ButtonPush:
         send_button.grid(column=4, row=1)
 
 class CanGuiApp(can.Listener):
-    def __init__(self, bus, ecu_interface, energy_interface):
+    def __init__(self, bus, ecu, energy, tester):
         self.bus = bus
-        self.ecu = ecu_interface 
-        self.energy = energy_interface
+        self.ecu = ecu 
+        self.energy = energy
+        self.tester= tester
         self.root = tk.Tk()
         self.root.title("CAN DIAG")
         self.root.geometry("640x480")
         self.msg_queue=queue.Queue()
         self.running=True
-        self.current_arbitration_id = 0x18DABAF1
+        self.current_arbitration_id = self.tester.arbitration_id
         self.address_list = [
             0x18DABAF1,  # physical address
             0x18DBBAF1,  # functional address
@@ -89,11 +87,6 @@ class CanGuiApp(can.Listener):
         self.setup_controls()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(1, self.process_queue)
-        self.keyID=(0xFF, 0xFF) #DID0xD110、tester
-        self.kx_sk1=None #RID0xD111、tester
-        self.kx_pk2=None #RID0xD111、tester
-        self.ssk=None#tester
-        print(f"bus.channel_info = {self.bus.channel_info}")
 
     def setup_table(self):
         cols = [f"C{i+1}" for i in range(6)]
@@ -117,10 +110,10 @@ class CanGuiApp(can.Listener):
     def setup_controls(self):
         self.entry = tk.Entry(self.root, width=50)
         self.entry.place(relx=0.6, rely=0.1, anchor='center')
-        self.entry.bind("<Return>", lambda event: ButtonPush.send("Send", self.bus, self.ecu, self.entry, send_callback=self.send_message))
+        self.entry.bind("<Return>", lambda event: ButtonPush.send(self.entry, send_callback=self.send_message))
         self.entry.bind("<Double-Button-1>", self.show_dropdown)
 
-        self.send_button = tk.Button(self.root, text="Send", command=lambda: ButtonPush.send("Send", self.bus, self.ecu, self.entry, send_callback=self.send_message))
+        self.send_button = tk.Button(self.root, text="Send", command=lambda: ButtonPush.send(self.entry, send_callback=self.send_message))
         self.send_button.place(relx=0.9, rely=0.1, anchor='e')
 
         self.power_frame = tk.Frame(self.root)
@@ -234,6 +227,7 @@ class CanGuiApp(can.Listener):
             idx = sel[0]
             self.current_arbitration_id = self.address_list[idx]
             self.addr_button.config(text=self.format_addr(self.current_arbitration_id))
+            self.tester.arbitration_id = self.current_arbitration_id
             win.destroy()
         tk.Button(win, text="Set as Current", width=14, command=set_current).pack(pady=10)
 
@@ -264,27 +258,13 @@ class CanGuiApp(can.Listener):
                 wrapped.is_rx = False
             else:
                 wrapped.is_rx = True
-                if list(msg.data[0:3]) ==[0x62, 0xD1, 0x10]:
-                    self.keyID=(msg.data[4], msg.data[5])
-                if list(msg.data[0:6]) ==[0x71, 0x01, 0xD1, 0x11, 0x00, 0x00]:
-                    raw_pk=(msg.data[6:])
-                    self.kx_pk2 = bytes2Ecckey(raw_pk)
-                    self.ssk=gen_ssk(self.kx_sk1, self.kx_pk2)
-                if list(msg.data[0:3])==[0x69, 0x05, 0x00]:
-                    challengeServer=msg.data[21:37]
-                    self.authenticator=aes128_encrypt(challengeServer, self.ssk)
-                    self.ssk=None
             self.disp_msg(wrapped)
     
-    def send_message(self, data, arbitration_id=None):
-        if arbitration_id is None:
-            arbitration_id=self.current_arbitration_id
-        msg = can.Message(datetime.datetime.now().timestamp(), arbitration_id=arbitration_id, data=data, is_extended_id=True, is_rx=False)
-        msg.is_rx=False
+    def send_message(self, data: list[int])->None:
         try:
-            self.bus.send(msg)
+            self.tester.send_message(data)
         except can.CanError:
-            print("Message NOT sent")
+            print("[GUI] Message NOT sent")
 
     def stop(self):
         self.running = False
@@ -343,22 +323,7 @@ class CanGuiApp(can.Listener):
             self.root.unbind("<Button-1>")
 
     def get_options(self) ->list:
-        return [self.generate_rid0xd111_request(), self.generate_sid0x29_0x06_request(), self.generate_sid0x29_0x05_request()]
-    
-    def generate_rid0xd111_request(self) ->list[int]:
-        self.kx_sk1, kx_pk1=gen_ecdhe_keypair()
-        secret_key=find_secret_key(self.keyID)
-        signature=gen_signature(secret_key, kx_pk1)
-        rid_0x111_req=gen_rid0x111_req(kx_pk1,signature)
-        return rid_0x111_req
-
-    def generate_sid0x29_0x06_request(self) ->list[int]:
-        if not hasattr(self, "authenticator") or self.authenticator is None:
-            return []
-        return [0x29, 0x06] + ALGORITHMINDICATOR + [0x00, 0x10] + self.authenticator + [0x00] * 4
-    
-    def generate_sid0x29_0x05_request(self) ->list[int]:
-        return [0x29, 0x05, 0x00] + ALGORITHMINDICATOR
+        return [self.tester.generate(cmd) for cmd in self.tester.available_commands()]
     
     # ========= gif animate =========
     def load_gif_frames(self, path, size=(20, 20)):

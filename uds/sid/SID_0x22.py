@@ -35,7 +35,7 @@ class SID_0x22(BaseSID):
             return cls.PositiveResponse(ecu, [0x62]+res)      
             
         except Exception as e:
-                    print(f"[ERROR] SID_0X22 error: {e}")
+                    print(f"[ERROR] SID_0x22 error: {e}")
                     import traceback
                     traceback.print_exc()
 
