@@ -148,8 +148,11 @@ class BaseSID:
     def filter_SPRMIB_response(cls, response:can.Message, ecu) -> can.Message|None:
         if response is None:
             return None
-        key=(response.data[0]-0x40, response.data[1])
-        return None if (response.data[0]!=0x7F and ecu.SPRMIB.get(key)) else response
+        data=response.data
+        key=(response.data[0]-0x40, data[1]) if len(data)>1 else None
+        if data[0] != 0x7F and key and ecu.SPRMIB.get(key):
+            return None
+        return response
     
     @classmethod
     def set_SPRMIB_response(cls, req:can.Message, ecu) ->None:

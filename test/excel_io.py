@@ -31,6 +31,7 @@ class ExcelTestCase:
     address: str
     session: str
     security: str
+    condition: int
 
 class ExcelTestCases:
     def __init__(self, workbook_path: str):
@@ -51,16 +52,16 @@ class ExcelTestCases:
         exp = exp_raw.strip()
         if exp.startswith("NRC$"):
             return f"7F {sid} {exp.replace('NRC$', '')}"
-        if exp in ("ポジティブレスポンス", "Positive", "POS"):
+        if exp.upper() in ("ポジティブレスポンス", "POSITIVE", "POS", "正响应"):
             return "*"     # allow any positive response
-        if exp in ("ノーレスポンス", "NO RESPONSE", "NoResponse"):
+        if exp.upper() in ("ノーレスポンス", "NO RESPONSE", "NORESPONSE", "负响应"):
             return "NO RESPONSE"
         return exp
     
     def _address_filter(self, address: str)-> str:
-        if address is None or address == "" or address == "-" or address.upper() == "物理" or address.upper() == "PHYSICAL":
+        if address.upper() in ("", "-", "物理", "PHYSICAL"):
             return hex(PHYSICAL_ID)
-        if address == "機能" or address == "FUNCTIONAL":
+        if address.upper() in ("FUNCTIONAL", "功能", "機能"):
             return hex(FUNCTIONAL_ID)
 
     def _adjust_hex_str(self, hex_str, length):
@@ -84,7 +85,7 @@ class ExcelTestCases:
                 tcid = row[headers["TestCaseSpecID"]].value
                 if tcid is None:
                     continue
-                address_raw = row[headers["アドレス"]].value
+                address_raw = row[headers["Address"]].value
                 address = self._address_filter(address_raw)
                 session_name = row[headers["Session"]].value
                 if session_name is None:
@@ -105,7 +106,7 @@ class ExcelTestCases:
                             subf_raw=f"{subf_val:02X}"
                     req_items.append(subf_raw)
                 
-                data_raw = (row[headers.get("Dataパラメータ", None)]).value if "Dataパラメータ" in headers else ""
+                data_raw = (row[headers.get("Data", None)]).value if "Data" in headers else ""
                 if data_raw not in ("", None, "-"):
                     data_str = str(data_raw).replace("$", "").upper()
                     data_str2 = " ".join(data_str[i:i+2] for i in range(0, len(data_str), 2))
@@ -114,11 +115,11 @@ class ExcelTestCases:
 
                 req_str = " ".join(req_items)
 
-                exp_raw = row[headers["期待値"]].value or ""
+                exp_raw = row[headers["Expect"]].value or ""
                 expected = self._normalize_expected(sid, exp_raw)
 
                 try:
-                    security_raw = row[headers["security"]].value or ""
+                    security_raw = row[headers["Security"]].value or ""
                     if security_raw not in ("", None, "-"):
                         security=SECURITY_NAME_MAP_REVERSE[security_raw]  
                     else:
@@ -126,7 +127,15 @@ class ExcelTestCases:
                 except KeyError:
                     security= None
 
-                length_raw=row[headers["メッセージ長"]].value or ""
+                con=None
+                try:
+                    con_raw = (row[headers["Condition"]].value or 0)
+                except KeyError:
+                    con_raw= None
+                if con_raw not in ("", None, "-"):   
+                    con=int(con_raw)
+
+                length_raw=row[headers["Length"]].value or ""
                 if length_raw not in ("", None, "-"):
                     num_str = ''.join(ch for ch in length_raw if ch.isdigit())
                     length = int(num_str)
@@ -141,7 +150,8 @@ class ExcelTestCases:
                         expected=expected,
                         address=address,
                         session=session,
-                        security=security
+                        security=security,
+                        condition=con
                     )
                 )
     def cases_to_yaml(self, output_path: str):
@@ -152,7 +162,7 @@ class ExcelTestCases:
                 "Sheet": case.sheet_name,
                 "Request": case.request,
                 "Expected": case.expected,
-                "Address": hex(FUNCTIONAL_ID) if case.address=="機能" else hex(PHYSICAL_ID), 
+                "Address": hex(FUNCTIONAL_ID) if case.address=="Functional" else hex(PHYSICAL_ID), 
                 "Session": case.session,  #
                 "Row": case.row_index,
                 "Security": case.security
@@ -166,7 +176,7 @@ class ExcelTestCases:
             if case.tcid == tcid:
                 ws = self.wb[case.sheet_name]
                 headers = self.sheet_header_map[case.sheet_name]
-                row = self.sheet_case_rows[case.sheet_name][case.tcid]
+                row = case.row_index
                 ws.cell(row=row, column=len(headers)).value = result      
                 ws.cell(row=row, column=len(headers)-1).value = actual    
                 return

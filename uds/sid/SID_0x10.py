@@ -89,10 +89,10 @@ class SID_0x10(BaseSID):
     def handle_engineering(cls, request, ecu):
         if not cls.is_session_supported(ecu.session, request):
             return cls.NegativeResponse(ecu, 0x7E)
-        if cls.check_length(request, expected_length=2) is False:
-            return cls.NegativeResponse(ecu, 0x13)
         if (ecu.security == SecurityType.FALSE) and request.data[1]==SESSIONS.ENGINEERING_SESSION:
             return cls.NegativeResponse(ecu, 0x33)
+        if cls.check_length(request, expected_length=2) is False:
+            return cls.NegativeResponse(ecu, 0x13)
         ecu.session=SESSIONS.ENGINEERING_SESSION
         return cls.PositiveResponse(ecu, [0x50, SESSIONS.ENGINEERING_SESSION, 0x00, 0x32, 0x01, 0xF4])
     
