@@ -90,9 +90,7 @@ DID/RID 配置基于 YAML/JSON文件驱动，支持一下多种类型：
 ---
 
 ### 2️⃣ 安装依赖
-```
-pip install -r requirements.txt
-```
+
 
 ---
 
