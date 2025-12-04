@@ -1,0 +1,6 @@
+python-can>=4.0
+pyyaml>=6.0
+ruamel.yaml>=0.18
+pycryptodome>=3.20
+ecdsa>=0.18
+pillow>=10.0
